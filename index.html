@@ -1216,8 +1216,10 @@ function doPost(e) {<br>
 //  STATE & CONFIG
 // ══════════════════════════════════════════
 const STATE = {
-  gsUrl: localStorage.getItem('gsUrl') || '',
-  gsScriptUrl: localStorage.getItem('gsScriptUrl') || '',
+  // URL Apps Script nhúng sẵn - người dùng không cần cấu hình
+  _defaultScriptUrl: 'https://script.google.com/macros/s/AKfycbyliwM3uUp0PvCjU0TSXLBNLyL1VE785K9u9grcmZxgcZL52NFukQQmEiXnKm-QjY0z/exec',
+  gsUrl: localStorage.getItem('gsUrl') || 'https://script.google.com/macros/s/https://script.google.com/macros/s/AKfycbz_Iuqz7szg6RS1rppNep6KbxTYLMToCHa2ENRdJs3gGm5QtJHgD15EQR-Eq_t7plqw/exec',
+  gsScriptUrl: localStorage.getItem('gsScriptUrl') || 'https://script.google.com/macros/s/AKfycbyliwM3uUp0PvCjU0TSXLBNLyL1VE785K9u9grcmZxgcZL52NFukQQmEiXnKm-QjY0z/exec',
   fieldPin: localStorage.getItem('fieldPin') || '1234',
   gsHeaderRowIdx: 0,   // Tự detect khi fetch GSheets
   gsColMap: null,      // Tự detect khi fetch GSheets
@@ -1282,11 +1284,25 @@ async function fetchFromGSheets() {
   try {
     let raw;
     if(scriptUrl) {
-      // Dùng Apps Script để lấy dữ liệu - không bị lỗi 401
+      // Dùng Apps Script để lấy dữ liệu
       const params = encodeURIComponent(JSON.stringify({action:'getData', sheet:'DIEM_DEN'}));
-      const res = await fetch(scriptUrl + '?payload=' + params, {redirect:'follow'});
+      const fetchUrl = scriptUrl + '?payload=' + params;
+      const res = await fetch(fetchUrl, {
+        method: 'GET',
+        redirect: 'follow',
+        mode: 'cors',
+      });
       if(!res.ok) throw new Error('HTTP '+res.status);
-      raw = await res.json();
+      const text = await res.text();
+      // Apps Script đôi khi trả về JSON bọc trong callback
+      try {
+        raw = JSON.parse(text);
+      } catch(e) {
+        // Thử bóc vỏ callback nếu có
+        const m = text.match(/\[[\s\S]*\]/);
+        if(m) raw = JSON.parse(m[0]);
+        else throw new Error('Invalid JSON: ' + text.substring(0,100));
+      }
     } else {
       // Dùng gviz URL (cần sheet công khai)
       const res = await fetch(sheetUrl);
@@ -1383,6 +1399,7 @@ async function postToGSheets(payload) {
     const res = await fetch(url, {
       method: 'GET',
       redirect: 'follow',
+      mode: 'cors',
     });
     const text = await res.text();
     try { return JSON.parse(text); } catch(e) { return {ok:true}; }
@@ -2722,4 +2739,3 @@ renderPublicMap = function() {
 
 </body>
 </html>
-
