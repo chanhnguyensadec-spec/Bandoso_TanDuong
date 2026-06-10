@@ -1217,7 +1217,7 @@ function doPost(e) {<br>
 // ══════════════════════════════════════════
 const STATE = {
   // Cấu hình nhúng sẵn - không cần người dùng thiết lập
-  gsSheetId: 'https://docs.google.com/spreadsheets/d/1Eh0IDXWC_5dzjDnqR_nl1A7I7u04p4DDyLCG0jVHVXE',
+  gsSheetId: '1Eh0IDXWC_5dzjDnqR_nl1A7I7u04p4DDyLCG0jVHVXE',
   gsScriptUrl: 'https://script.google.com/macros/s/AKfycbzaoApb2_tH7vjFqJyrMMIAhyJhkfVgm67Gr95j14GFquR6Bx6lGhOTlVEivDuL1VNu/exec',
   gsUrl: localStorage.getItem('gsUrl') || 'https://script.google.com/macros/s/AKfycbzaoApb2_tH7vjFqJyrMMIAhyJhkfVgm67Gr95j14GFquR6Bx6lGhOTlVEivDuL1VNu/exec',
   fieldPin: localStorage.getItem('fieldPin') || '1234',
@@ -1401,13 +1401,8 @@ async function refreshData() {
     showToast(`Đã tải ${data.length} địa điểm từ Google Sheets`,'success');
     document.getElementById('last-sync-txt').textContent = 'Đồng bộ lần cuối: '+new Date().toLocaleTimeString('vi-VN');
   } else {
-    if(STATE.gsUrl) {
-      setGsStatus('disconnected');
-      showToast('Không kết nối được Google Sheets. Kiểm tra lại URL.','error');
-    } else {
-      setGsStatus('disconnected');
-      showToast('Chưa cài URL Google Sheets. Vào Đăng nhập → Cài đặt để cấu hình.','info');
-    }
+    setGsStatus('disconnected');
+    showToast('Không tải được dữ liệu. Kiểm tra Google Sheets đã chia sẻ công khai chưa.','error');
   }
   renderAll();
 }
@@ -1631,9 +1626,9 @@ function renderPublicMap() {
 function renderPointList(points) {
   const el=document.getElementById('point-list');
   if(!points.length){
-    const msg = STATE.gsUrl
-      ? '<div class="empty-state"><i class="fa-solid fa-magnifying-glass"></i>Không tìm thấy địa điểm</div>'
-      : '<div class="empty-state"><i class="fa-solid fa-plug"></i>Chưa kết nối dữ liệu<div style="font-size:11px;margin-top:6px;color:var(--text3)">Đăng nhập → Cài đặt → Cấu hình GSheets</div></div>';
+    const msg = STATE.points.length === 0
+      ? '<div class="empty-state"><i class="fa-solid fa-rotate fa-spin"></i>Đang tải dữ liệu...<div style="font-size:11px;margin-top:6px;color:var(--text3)">Vui lòng chờ hoặc nhấn Đồng bộ</div></div>'
+      : '<div class="empty-state"><i class="fa-solid fa-magnifying-glass"></i>Không tìm thấy địa điểm</div>';
     el.innerHTML=msg; return;
   }
   el.innerHTML=points.map(p=>{
@@ -2350,22 +2345,14 @@ function renderFdList() {
 
 // Điền link ảnh hàng loạt từ Drive (admin dùng)
 async function testGSConnection() {
-  const scriptUrl = STATE.gsScriptUrl || STATE.gsUrl;
-  if(!scriptUrl) { showToast('Chưa cài URL Apps Script','error'); return; }
   showToast('Đang kiểm tra kết nối...','info');
   try {
-    const res  = await fetch(scriptUrl, { method:'GET', redirect:'follow' });
-    const text = await res.text();
-    console.log('Test response:', text);
-    try {
-      const data = JSON.parse(text);
-      if(data.status === 'ok' || data.ok) {
-        showToast('✅ Kết nối tốt! Apps Script hoạt động bình thường.','success');
-      } else {
-        showToast('⚠️ Kết nối được nhưng phản hồi lạ: ' + text.substring(0,80),'error');
-      }
-    } catch(e) {
-      alert('Apps Script trả về HTML thay vì JSON.\nNguyên nhân: chưa deploy đúng hoặc cần cấp quyền lại.\n\nPhản hồi nhận được:\n' + text.substring(0,300));
+    // Test đọc CSV từ Sheets
+    const data = await fetchFromGSheets();
+    if(data && data.length > 0) {
+      showToast('✅ Kết nối Google Sheets tốt! Tìm thấy ' + data.length + ' địa điểm.','success');
+    } else {
+      showToast('⚠️ Kết nối được nhưng không có dữ liệu. Kiểm tra tên sheet DIEM_DEN và quyền chia sẻ.','error');
     }
   } catch(err) {
     showToast('❌ Không kết nối được: ' + err.message,'error');
