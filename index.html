@@ -2132,7 +2132,24 @@ function autoFdId() {
   document.getElementById('fd-id').value = 'DD' + String(max+1).padStart(3,'0');
 }
 
-// -- Xử lý ảnh chụp + upload Google Drive --
+// -- Nén ảnh trước khi upload --
+function compressImage(base64, maxWidth, quality) {
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      let w = img.width, h = img.height;
+      if(w > maxWidth) { h = Math.round(h * maxWidth / w); w = maxWidth; }
+      canvas.width = w; canvas.height = h;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0, w, h);
+      resolve(canvas.toDataURL('image/jpeg', quality));
+    };
+    img.src = base64;
+  });
+}
+
+// -- Xử lý ảnh chụp + upload --
 const DRIVE_FOLDER_ID = '1RKvrAOkHRdoXDQ9HUh-V4oVD_sdz7-nu';
 let fdPhotoBase64 = '';
 let fdPhotoUploaded = ''; // Link Drive sau khi upload thành công
@@ -2159,40 +2176,37 @@ function handleFdPhoto(input) {
     note.style.display = 'block';
     note.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Đang upload ảnh lên Google Drive...';
 
-    // Upload lên Drive qua Apps Script
-    if(STATE.gsUrl) {
-      try {
-        const base64Data = fdPhotoBase64.split(',')[1];
-        const mimeType = file.type || 'image/jpeg';
-        const ptId = document.getElementById('fd-id').value.trim() || ('TD_'+Date.now());
-        const fileName = ptId + '_' + Date.now() + '.' + (file.name.split('.').pop() || 'jpg');
+    // Upload ảnh lên Imgur (miễn phí, không bị CORS, hoạt động tốt trên điện thoại)
+    try {
+      note.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Đang nén và upload ảnh...';
 
-        const res = await fetch(STATE.gsUrl, {
-          method: 'POST',
-          body: JSON.stringify({
-            action: 'uploadPhoto',
-            fileName,
-            mimeType,
-            base64Data,
-            folderId: DRIVE_FOLDER_ID
-          })
-        });
-        const data = await res.json();
-        if(data.url) {
-          fdPhotoUploaded = data.url;
-          document.getElementById('fd-img').value = data.url;
-          note.innerHTML = '<i class="fa-solid fa-check" style="color:#1a5c38"></i> Upload thành công! Ảnh đã lưu trên Google Drive.';
-          showToast('✅ Ảnh đã upload lên Drive','success');
-        } else {
-          throw new Error(data.error || 'Upload thất bại');
-        }
-      } catch(err) {
-        fdPhotoUploaded = '';
-        note.innerHTML = '<i class="fa-solid fa-triangle-exclamation" style="color:#e8870a"></i> Upload Drive thất bại. Ảnh lưu tạm — hãy upload Drive thủ công sau.';
-        console.warn('Upload error:', err);
+      // Nén ảnh xuống tối đa 1MB trước khi upload
+      const compressed = await compressImage(fdPhotoBase64, 1200, 0.75);
+      const base64Data = compressed.split(',')[1];
+
+      const formData = new FormData();
+      formData.append('image', base64Data);
+      formData.append('type', 'base64');
+
+      const res = await fetch('https://api.imgur.com/3/image', {
+        method: 'POST',
+        headers: { 'Authorization': 'Client-ID 546c25a59c58ad7' },
+        body: formData
+      });
+      const data = await res.json();
+
+      if(data.success && data.data && data.data.link) {
+        fdPhotoUploaded = data.data.link;
+        document.getElementById('fd-img').value = data.data.link;
+        note.innerHTML = '<i class="fa-solid fa-check" style="color:#1a5c38"></i> Upload thành công! Ảnh đã lưu.';
+        showToast('✅ Ảnh đã upload thành công','success');
+      } else {
+        throw new Error(data.data && data.data.error ? data.data.error : 'Upload thất bại');
       }
-    } else {
-      note.innerHTML = '<i class="fa-solid fa-circle-info"></i> Chưa kết nối GSheets. Hãy upload ảnh lên Drive thủ công và dán link vào ô bên dưới.';
+    } catch(err) {
+      fdPhotoUploaded = '';
+      note.innerHTML = '<i class="fa-solid fa-triangle-exclamation" style="color:#e8870a"></i> Upload thất bại. Hãy dán link ảnh thủ công vào ô bên dưới.';
+      console.warn('Upload error:', err);
     }
   };
   reader.readAsDataURL(file);
@@ -2276,19 +2290,22 @@ async function submitFdPoint() {
       const coordStr = lat + ', ' + lng;
       let finalImg = img;
 
-      // Nếu có ảnh chụp từ camera → upload lên Drive trước
+      // Nếu có ảnh chụp từ camera → upload lên Imgur (không bị CORS)
       if(fdPhotoBase64 && !img) {
         btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Đang upload ảnh...';
         try {
-          const b64 = fdPhotoBase64.split(',')[1]; // bỏ "data:image/jpeg;base64,"
-          const mime = fdPhotoBase64.split(';')[0].split(':')[1];
-          const res = await postToGSheets({
-            action: 'uploadImage',
-            base64: b64,
-            fileName: id + '_' + Date.now() + '.jpg',
-            mimeType: mime
+          const compressed = await compressImage(fdPhotoBase64, 1200, 0.75);
+          const b64 = compressed.split(',')[1];
+          const formData = new FormData();
+          formData.append('image', b64);
+          formData.append('type', 'base64');
+          const res = await fetch('https://api.imgur.com/3/image', {
+            method: 'POST',
+            headers: { 'Authorization': 'Client-ID 546c25a59c58ad7' },
+            body: formData
           });
-          if(res && res.url) finalImg = res.url;
+          const d = await res.json();
+          if(d.success && d.data && d.data.link) finalImg = d.data.link;
         } catch(e) {
           console.warn('Upload ảnh thất bại, tiếp tục không có ảnh', e);
         }
