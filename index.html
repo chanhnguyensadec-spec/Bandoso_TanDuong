@@ -1218,7 +1218,7 @@ function doPost(e) {<br>
 const STATE = {
   // Cấu hình nhúng sẵn - không cần người dùng thiết lập
   gsSheetId: '1Eh0IDXWC_5dzjDnqR_nl1A7I7u04p4DDyLCG0jVHVXE',
-  gsScriptUrl: 'https://script.google.com/macros/s/AKfycbzaoApb2_tH7vjFqJyrMMIAhyJhkfVgm67Gr95j14GFquR6Bx6lGhOTlVEivDuL1VNu/exec',
+  gsScriptUrl: 'https://script.google.com/macros/s/AKfycbzhjl1o4ylulWa4Q2zMGt2xn70lZQcjadUmRZCqUt91F1u7YOlhQ53zS7MGse3S13Lv/exec',
   gsUrl: localStorage.getItem('gsUrl') || 'https://script.google.com/macros/s/AKfycbzaoApb2_tH7vjFqJyrMMIAhyJhkfVgm67Gr95j14GFquR6Bx6lGhOTlVEivDuL1VNu/exec',
   fieldPin: localStorage.getItem('fieldPin') || '1234',
   gsHeaderRowIdx: 0,   // Tự detect khi fetch GSheets
@@ -1841,10 +1841,33 @@ async function savePoint() {
   if(STATE.gsUrl) await postToGSheets({action:'append',row:[pt.id,pt.name,pt.cat,pt.addr,coordStr,pt.img||'',pt.desc,pt.phone,pt.price,'','','Đã duyệt'],sheet:'DIEM_DEN'});
   closeModal('modal-point'); renderAll(); showToast('Đã lưu địa điểm thành công','success');
 }
-function deletePoint(id) {
-  if(!confirm('Xóa địa điểm này?')) return;
-  STATE.points=STATE.points.filter(p=>p.id!==id);
-  saveLocal(); renderAll(); showToast('Đã xóa địa điểm','success');
+async function deletePoint(id) {
+  const p = STATE.points.find(x=>x.id===id);
+  if(!p) return;
+  if(!confirm('Xóa địa điểm "' + p.name + '"?\n\nHành động này sẽ xóa khỏi Google Sheets và không thể hoàn tác.')) return;
+
+  // Xóa trên Sheets trước (dùng Apps Script)
+  if(STATE.gsScriptUrl) {
+    showToast('Đang xóa trên Google Sheets...','info');
+    try {
+      const row = findRowById(id);
+      const params = encodeURIComponent(JSON.stringify({
+        action: 'deleteRow',
+        sheet: 'DIEM_DEN',
+        row: row
+      }));
+      await fetch(STATE.gsScriptUrl + '?payload=' + params, {method:'GET', redirect:'follow', mode:'cors'});
+    } catch(e) {
+      console.warn('Xóa trên Sheets thất bại:', e);
+      showToast('⚠️ Không xóa được trên Sheets. Hãy xóa thủ công trên Google Sheets.','error');
+    }
+  }
+
+  // Xóa trong app
+  STATE.points = STATE.points.filter(p=>p.id!==id);
+  saveLocal();
+  renderAll();
+  showToast('Đã xóa địa điểm "' + p.name + '"','success');
 }
 
 // ══════════════════════════════════════════
