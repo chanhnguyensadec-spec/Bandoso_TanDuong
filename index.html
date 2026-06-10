@@ -1289,13 +1289,14 @@ async function fetchFromGSheets() {
     const raw = parseCSV(csv);
     if(!Array.isArray(raw) || raw.length < 2) return null;
 
-    // Tìm hàng header thật (hàng đầu tiên có chứa "mã" hoặc "tên")
+    // Tìm hàng header thật: phải có ít nhất 2 từ khoá quan trọng
     let headerRowIdx = 0;
     for(let i=0; i<Math.min(5,raw.length); i++){
       const row = raw[i].map(c=>String(c||'').toLowerCase());
-      if(row.some(c=>c.includes('mã điểm') || c.includes('tên điểm') || (c.includes('mã') && c.length < 10))) {
-        headerRowIdx=i; break;
-      }
+      const hasMa   = row.some(c=>c.includes('mã điểm') || c==='mã');
+      const hasTen  = row.some(c=>c.includes('tên điểm') || c==='tên điểm');
+      const hasLoai = row.some(c=>c.includes('phân loại'));
+      if((hasMa && hasTen) || (hasMa && hasLoai)) { headerRowIdx=i; break; }
     }
     STATE.gsHeaderRowIdx = headerRowIdx;
     const headers = raw[headerRowIdx];
@@ -1351,23 +1352,29 @@ async function fetchFromGSheets() {
   } catch(e) { console.warn('GSheets fetch error', e); return null; }
 }
 
-// Parse CSV chuẩn (xử lý dấu phẩy trong ngoặc kép)
+// Parse CSV chuẩn RFC 4180 - xử lý đúng dấu phẩy và xuống dòng trong ngoặc kép
 function parseCSV(text) {
   const rows = [];
-  const lines = text.split(/\r?\n/);
-  for(const line of lines) {
-    if(!line.trim()) continue;
-    const cols = [];
-    let cur = '', inQ = false;
-    for(let i=0; i<line.length; i++) {
-      const ch = line[i];
-      if(ch==='"') { inQ=!inQ; }
-      else if(ch===',' && !inQ) { cols.push(cur); cur=''; }
+  let cur = '', inQ = false, row = [];
+  for(let i=0; i<text.length; i++) {
+    const ch = text[i];
+    const next = text[i+1];
+    if(inQ) {
+      if(ch==='"' && next==='"') { cur+='"'; i++; }       // "" = dấu ngoặc kép escaped
+      else if(ch==='"') { inQ=false; }                    // Đóng ngoặc kép
       else { cur+=ch; }
+    } else {
+      if(ch==='"') { inQ=true; }                          // Mở ngoặc kép
+      else if(ch===',') { row.push(cur.trim()); cur=''; } // Tách cột
+      else if(ch==='\n'||(ch==='\r'&&next==='\n')) {    // Xuống dòng
+        if(ch==='\r') i++;
+        row.push(cur.trim());
+        if(row.some(c=>c)) rows.push(row);                // Bỏ hàng trống
+        row=[]; cur='';
+      } else { cur+=ch; }
     }
-    cols.push(cur);
-    rows.push(cols.map(c=>c.trim()));
   }
+  if(cur||row.length) { row.push(cur.trim()); if(row.some(c=>c)) rows.push(row); }
   return rows;
 }
 
