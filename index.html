@@ -1216,10 +1216,10 @@ function doPost(e) {<br>
 //  STATE & CONFIG
 // ══════════════════════════════════════════
 const STATE = {
-  // URL Apps Script nhúng sẵn - người dùng không cần cấu hình
-  _defaultScriptUrl: 'https://script.google.com/macros/s/AKfycbyliwM3uUp0PvCjU0TSXLBNLyL1VE785K9u9grcmZxgcZL52NFukQQmEiXnKm-QjY0z/exec',
-  gsUrl: localStorage.getItem('gsUrl') || 'https://script.google.com/macros/s/https://script.google.com/macros/s/AKfycbzaoApb2_tH7vjFqJyrMMIAhyJhkfVgm67Gr95j14GFquR6Bx6lGhOTlVEivDuL1VNu/exec',
-  gsScriptUrl: localStorage.getItem('gsScriptUrl') || 'https://script.google.com/macros/s/AKfycbyliwM3uUp0PvCjU0TSXLBNLyL1VE785K9u9grcmZxgcZL52NFukQQmEiXnKm-QjY0z/exec',
+  // Cấu hình nhúng sẵn - không cần người dùng thiết lập
+  gsSheetId: '1Eh0IDXWC_5dzjDnqR_nl1A7I7u04p4DDyLCG0jVHVXE',
+  gsScriptUrl: 'https://script.google.com/macros/s/AKfycbzaoApb2_tH7vjFqJyrMMIAhyJhkfVgm67Gr95j14GFquR6Bx6lGhOTlVEivDuL1VNu/exec',
+  gsUrl: localStorage.getItem('gsUrl') || 'https://script.google.com/macros/s/AKfycbzaoApb2_tH7vjFqJyrMMIAhyJhkfVgm67Gr95j14GFquR6Bx6lGhOTlVEivDuL1VNu/exec',
   fieldPin: localStorage.getItem('fieldPin') || '1234',
   gsHeaderRowIdx: 0,   // Tự detect khi fetch GSheets
   gsColMap: null,      // Tự detect khi fetch GSheets
@@ -1278,48 +1278,15 @@ function detectCol(headers, keywords) {
 }
 
 async function fetchFromGSheets() {
-  const scriptUrl = STATE.gsScriptUrl;
-  const sheetUrl  = STATE.gsUrl;
-  if(!scriptUrl && !sheetUrl) return null;
   try {
-    let raw;
-    if(scriptUrl) {
-      // Dùng Apps Script để lấy dữ liệu
-      const params = encodeURIComponent(JSON.stringify({action:'getData', sheet:'DIEM_DEN'}));
-      const fetchUrl = scriptUrl + '?payload=' + params;
-      const res = await fetch(fetchUrl, {
-        method: 'GET',
-        redirect: 'follow',
-        mode: 'cors',
-      });
-      if(!res.ok) throw new Error('HTTP '+res.status);
-      const text = await res.text();
-      // Apps Script đôi khi trả về JSON bọc trong callback
-      try {
-        raw = JSON.parse(text);
-      } catch(e) {
-        // Thử bóc vỏ callback nếu có
-        const m = text.match(/\[[\s\S]*\]/);
-        if(m) raw = JSON.parse(m[0]);
-        else throw new Error('Invalid JSON: ' + text.substring(0,100));
-      }
-    } else {
-      // Dùng gviz URL (cần sheet công khai)
-      const res = await fetch(sheetUrl);
-      if(!res.ok) throw new Error('HTTP '+res.status);
-      const text = await res.text();
-      // Parse gviz JSON (có prefix /*O_o*/ hoặc google.visualization...)
-      const jsonStr = text.replace(/^[^[{]*/, '').replace(/\);?\s*$/, '');
-      const gviz = JSON.parse(jsonStr);
-      // Chuyển gviz format sang 2D array
-      if(gviz && gviz.table) {
-        const cols = gviz.table.cols.map(c => c.label);
-        const rows = (gviz.table.rows||[]).map(r => r.c.map(c => c ? (c.v !== null ? c.v : '') : ''));
-        raw = [cols, ...rows];
-      } else {
-        raw = await res.json();
-      }
-    }
+    // Dùng CSV export - đơn giản, không bị CORS, không cần Apps Script
+    const csvUrl = 'https://docs.google.com/spreadsheets/d/1Eh0IDXWC_5dzjDnqR_nl1A7I7u04p4DDyLCG0jVHVXE/export?format=csv&sheet=DIEM_DEN';
+    const res = await fetch(csvUrl);
+    if(!res.ok) throw new Error('HTTP '+res.status);
+    const csv = await res.text();
+
+    // Parse CSV thành 2D array
+    const raw = parseCSV(csv);
     if(!Array.isArray(raw) || raw.length < 2) return null;
 
     // Tìm hàng header thật (hàng đầu tiên có chứa "mã" hoặc "tên")
@@ -1330,13 +1297,10 @@ async function fetchFromGSheets() {
         headerRowIdx=i; break;
       }
     }
-    // Lưu vào STATE để findRowById dùng đúng offset
     STATE.gsHeaderRowIdx = headerRowIdx;
     const headers = raw[headerRowIdx];
     const rows = raw.slice(headerRowIdx+1);
-    console.log(`Header tại hàng ${headerRowIdx+1} (GSheets), offset cho update = ${headerRowIdx+2}`);
 
-    // Dò vị trí từng cột theo từ khoá linh hoạt
     const C = {
       id:     detectCol(headers, ['mã điểm','mã']),
       name:   detectCol(headers, ['tên điểm','tên']),
@@ -1347,12 +1311,11 @@ async function fetchFromGSheets() {
       desc:   detectCol(headers, ['mô tả','mô','giới thiệu']),
       phone:  detectCol(headers, ['số đt chính thức','sđt chính','số điện thoại chính']),
       price:  detectCol(headers, ['giá sản phẩm chính thức','giá chính','giá sản phẩm']),
-      pendingSdt: detectCol(headers, ['sđt chờ','số đt chờ','sđt chờ duyệt']),
-      pendingGia: detectCol(headers, ['giá chờ','giá chờ duyệt']),
+      pendingSdt: detectCol(headers, ['sđt chờ','số đt chờ']),
+      pendingGia: detectCol(headers, ['giá chờ']),
       status: detectCol(headers, ['trạng thái','duyệt']),
     };
 
-    // Lưu mapping cột vào STATE để update đúng cột (dùng số cột GSheets = index+1)
     STATE.gsColMap = {
       phone:      C.phone >= 0      ? C.phone + 1      : 8,
       price:      C.price >= 0      ? C.price + 1      : 9,
@@ -1360,13 +1323,12 @@ async function fetchFromGSheets() {
       pendingGia: C.pendingGia >= 0 ? C.pendingGia + 1 : 11,
       status:     C.status >= 0     ? C.status + 1     : 12,
     };
-    console.log('Detected columns:', Object.fromEntries(Object.entries(C).map(([k,v])=>[k, v>=0?`col${v+1}:${headers[v]}`:'NOT FOUND'])));
-    console.log('GSheets col map:', STATE.gsColMap);
+
+    console.log('CSV headers detected:', Object.fromEntries(Object.entries(C).map(([k,v])=>[k, v>=0?headers[v]:'NOT FOUND'])));
 
     const g = (row, col) => col>=0 ? String(row[col]||'') : '';
 
     return rows.filter(r => g(r, C.id)).map(r => {
-      // Parse tọa độ: hỗ trợ "10.2981°N, 105.733°E" hoặc "10.2981, 105.733"
       const coordRaw = g(r, C.coord).replace(/[°NESWnsew]/g,'');
       const coordParts = coordRaw.split(',').map(s=>parseFloat(s.trim())).filter(n=>!isNaN(n));
       const lat = coordParts[0] || 10.2988;
@@ -1387,6 +1349,26 @@ async function fetchFromGSheets() {
       };
     });
   } catch(e) { console.warn('GSheets fetch error', e); return null; }
+}
+
+// Parse CSV chuẩn (xử lý dấu phẩy trong ngoặc kép)
+function parseCSV(text) {
+  const rows = [];
+  const lines = text.split(/\r?\n/);
+  for(const line of lines) {
+    if(!line.trim()) continue;
+    const cols = [];
+    let cur = '', inQ = false;
+    for(let i=0; i<line.length; i++) {
+      const ch = line[i];
+      if(ch==='"') { inQ=!inQ; }
+      else if(ch===',' && !inQ) { cols.push(cur); cur=''; }
+      else { cur+=ch; }
+    }
+    cols.push(cur);
+    rows.push(cols.map(c=>c.trim()));
+  }
+  return rows;
 }
 
 async function postToGSheets(payload) {
