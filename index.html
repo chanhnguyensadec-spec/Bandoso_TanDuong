@@ -1,0 +1,2757 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bản Đồ Số - Xã Tân Dương, Đồng Tháp</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@300;400;500;600;700&family=Playfair+Display:wght@600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<style>
+:root {
+  --primary: #1a5c38;
+  --primary-light: #2d8a55;
+  --primary-pale: #e8f5ee;
+  --accent: #e8870a;
+  --accent-light: #fef3e2;
+  --blue: #1565c0;
+  --blue-light: #e3f0ff;
+  --red: #c62828;
+  --red-light: #ffebee;
+  --purple: #6a1b9a;
+  --purple-light: #f3e5f5;
+  --bg: #f4f6f3;
+  --card: #ffffff;
+  --text: #1a2e1f;
+  --text2: #5a7060;
+  --text3: #9aac9e;
+  --border: #d4e0d7;
+  --shadow: 0 2px 12px rgba(26,92,56,.08);
+  --shadow-md: 0 4px 24px rgba(26,92,56,.12);
+  --radius: 12px;
+  --radius-sm: 8px;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Be Vietnam Pro', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+
+/* ── SCREENS ── */
+.screen { display: none; min-height: 100vh; }
+.screen.active { display: flex; flex-direction: column; }
+
+/* ══════════════════════════════════════════
+   SCREEN: LOGIN
+══════════════════════════════════════════ */
+#screen-login {
+  background: linear-gradient(135deg, #0f3d22 0%, #1a5c38 50%, #2d8a55 100%);
+  align-items: center; justify-content: center; padding: 24px;
+}
+.login-box {
+  background: #fff; border-radius: 20px; padding: 40px 36px;
+  width: 100%; max-width: 400px; box-shadow: 0 24px 80px rgba(0,0,0,.25);
+}
+.login-logo { text-align: center; margin-bottom: 28px; }
+.login-logo .icon-wrap {
+  width: 68px; height: 68px; border-radius: 18px; background: var(--primary);
+  display: inline-flex; align-items: center; justify-content: center; margin-bottom: 12px;
+}
+.login-logo .icon-wrap i { font-size: 30px; color: #fff; }
+.login-logo h1 { font-family: 'Playfair Display', serif; font-size: 22px; color: var(--primary); }
+.login-logo p { font-size: 13px; color: var(--text2); margin-top: 4px; }
+
+.role-tabs { display: flex; gap: 0; border: 1.5px solid var(--border); border-radius: var(--radius-sm); overflow: hidden; margin-bottom: 22px; }
+.role-tab { flex: 1; padding: 9px 0; text-align: center; font-size: 13px; font-weight: 500; cursor: pointer; transition: all .2s; color: var(--text2); background: #fff; border: none; }
+.role-tab.active { background: var(--primary); color: #fff; }
+
+.form-group { margin-bottom: 16px; }
+.form-group label { font-size: 12px; font-weight: 600; color: var(--text2); text-transform: uppercase; letter-spacing: .5px; display: block; margin-bottom: 6px; }
+.form-group input, .form-group select {
+  width: 100%; padding: 11px 14px; border: 1.5px solid var(--border); border-radius: var(--radius-sm);
+  font-size: 14px; font-family: inherit; color: var(--text); background: #fff; outline: none; transition: border .2s;
+}
+.form-group input:focus, .form-group select:focus { border-color: var(--primary); }
+.btn-login {
+  width: 100%; padding: 13px; background: var(--primary); color: #fff; border: none;
+  border-radius: var(--radius-sm); font-size: 15px; font-weight: 600; cursor: pointer;
+  transition: background .2s; font-family: inherit; margin-top: 4px;
+}
+.btn-login:hover { background: var(--primary-light); }
+.login-err { font-size: 13px; color: var(--red); text-align: center; margin-top: 10px; min-height: 20px; }
+.login-hint { font-size: 12px; color: var(--text3); text-align: center; margin-top: 14px; border-top: 1px solid var(--border); padding-top: 14px; }
+.btn-public { display: block; text-align: center; margin-top: 10px; font-size: 13px; color: var(--primary); cursor: pointer; text-decoration: underline; }
+
+/* ══════════════════════════════════════════
+   SHARED NAVBAR
+══════════════════════════════════════════ */
+.navbar {
+  background: var(--primary); color: #fff; padding: 0 20px; height: 56px;
+  display: flex; align-items: center; gap: 14px; flex-shrink: 0;
+  box-shadow: 0 2px 8px rgba(0,0,0,.2);
+}
+.navbar .brand { font-family: 'Playfair Display', serif; font-size: 18px; font-weight: 600; }
+.navbar .brand span { font-size: 12px; font-weight: 400; opacity: .7; margin-left: 6px; font-family: 'Be Vietnam Pro', sans-serif; }
+.navbar-right { margin-left: auto; display: flex; align-items: center; gap: 10px; }
+.nav-badge { background: rgba(255,255,255,.2); font-size: 12px; padding: 4px 10px; border-radius: 20px; }
+.btn-nav { background: rgba(255,255,255,.15); border: 1px solid rgba(255,255,255,.3); color: #fff; padding: 6px 14px; border-radius: var(--radius-sm); font-size: 13px; cursor: pointer; font-family: inherit; transition: background .2s; }
+.btn-nav:hover { background: rgba(255,255,255,.25); }
+
+/* ══════════════════════════════════════════
+   SCREEN: PUBLIC MAP
+══════════════════════════════════════════ */
+#screen-public { flex-direction: column; }
+.map-toolbar {
+  background: #fff; border-bottom: 1px solid var(--border); padding: 10px 16px;
+  display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+}
+.search-wrap { position: relative; flex: 1; min-width: 180px; max-width: 300px; }
+.search-wrap i { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: var(--text3); font-size: 14px; }
+.search-wrap input { width: 100%; padding: 8px 10px 8px 32px; border: 1.5px solid var(--border); border-radius: var(--radius-sm); font-size: 13px; font-family: inherit; outline: none; }
+.search-wrap input:focus { border-color: var(--primary); }
+.filter-pills { display: flex; gap: 6px; flex-wrap: wrap; }
+.pill { padding: 5px 12px; border-radius: 20px; font-size: 12px; font-weight: 500; cursor: pointer; border: 1.5px solid transparent; transition: all .15s; }
+.pill-all { background: var(--primary); color: #fff; }
+.pill-dtls { background: var(--blue-light); color: var(--blue); border-color: #90caf9; }
+.pill-dtls.active, .pill-dtls:hover { background: var(--blue); color: #fff; }
+.pill-ln { background: var(--primary-pale); color: var(--primary); border-color: #a5d6b0; }
+.pill-ln.active, .pill-ln:hover { background: var(--primary); color: #fff; }
+.pill-ocop { background: var(--accent-light); color: var(--accent); border-color: #ffcc80; }
+.pill-ocop.active, .pill-ocop:hover { background: var(--accent); color: #fff; }
+.pill-dl { background: var(--purple-light); color: var(--purple); border-color: #ce93d8; }
+.pill-dl.active, .pill-dl:hover { background: var(--purple); color: #fff; }
+.stat-chip { font-size: 12px; color: var(--text2); background: var(--bg); padding: 5px 12px; border-radius: 20px; border: 1px solid var(--border); margin-left: auto; white-space: nowrap; }
+
+.map-body { display: flex; flex: 1; overflow: hidden; }
+
+/* Sidebar */
+.map-sidebar { width: 288px; background: #fff; border-right: 1px solid var(--border); display: flex; flex-direction: column; flex-shrink: 0; }
+.sidebar-head { padding: 10px 14px; font-size: 12px; font-weight: 600; color: var(--text2); text-transform: uppercase; letter-spacing: .5px; border-bottom: 1px solid var(--border); }
+#point-list { overflow-y: auto; flex: 1; }
+.point-item { padding: 10px 12px; border-bottom: 1px solid var(--border); cursor: pointer; display: flex; gap: 8px; align-items: center; transition: background .1s; }
+.point-item:hover { background: var(--bg); }
+.point-item.sel { background: var(--primary-pale); border-left: 3px solid var(--primary); }
+.pt-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+.pt-info { flex: 1; min-width: 0; }
+.pt-name { font-size: 13px; font-weight: 600; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.pt-addr { font-size: 11px; color: var(--text2); margin-top: 2px; }
+.pt-cat { font-size: 10px; padding: 2px 7px; border-radius: 10px; flex-shrink: 0; font-weight: 500; white-space: nowrap; max-width: 90px; overflow: hidden; text-overflow: ellipsis; }
+
+/* Map canvas */
+.map-canvas { flex: 1; position: relative; overflow: hidden; }
+.leaflet-popup-content-wrapper { border-radius: 12px !important; box-shadow: 0 4px 24px rgba(26,92,56,.18) !important; }
+.leaflet-popup-content { margin: 14px 16px !important; font-family: 'Be Vietnam Pro', sans-serif !important; }
+.lf-popup-cat { font-size:11px;font-weight:700;padding:3px 8px;border-radius:10px;display:inline-block;margin-bottom:6px; }
+.lf-popup-name { font-size:15px;font-weight:700;color:#1a2e1f;margin-bottom:8px;line-height:1.3; }
+.lf-popup-row { font-size:12px;color:#5a7060;display:flex;gap:7px;margin-bottom:4px;align-items:flex-start; }
+.lf-popup-desc { font-size:12px;color:#5a7060;line-height:1.55;margin-top:8px;padding-top:8px;border-top:1px solid #d4e0d7;font-style:italic; }
+.lf-popup-btn { margin-top:10px;display:block;width:100%;padding:7px;background:#1a5c38;color:#fff;border:none;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;text-align:center; }
+.map-legend { position: absolute; bottom: 16px; left: 16px; background: rgba(255,255,255,.95); border-radius: var(--radius); padding: 12px 14px; font-size: 12px; border: 1px solid var(--border); box-shadow: var(--shadow); }
+.map-legend h4 { font-size: 11px; font-weight: 700; color: var(--text2); text-transform: uppercase; letter-spacing: .5px; margin-bottom: 8px; }
+.leg-row { display: flex; align-items: center; gap: 8px; margin-bottom: 5px; }
+.leg-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+
+/* Popup */
+.map-popup {
+  position: absolute; background: #fff; border-radius: var(--radius); padding: 16px;
+  width: 230px; box-shadow: var(--shadow-md); border: 1px solid var(--border);
+  display: none; z-index: 20; pointer-events: auto;
+}
+.popup-close { position: absolute; top: 10px; right: 10px; cursor: pointer; color: var(--text3); font-size: 16px; }
+.popup-cat { font-size: 11px; font-weight: 600; padding: 3px 8px; border-radius: 10px; display: inline-block; margin-bottom: 8px; }
+.popup-name { font-size: 15px; font-weight: 700; color: var(--text); margin-bottom: 10px; line-height: 1.3; }
+.popup-row { font-size: 12px; color: var(--text2); display: flex; gap: 8px; margin-bottom: 5px; align-items: flex-start; }
+.popup-row i { font-size: 12px; margin-top: 1px; flex-shrink: 0; }
+.popup-desc { font-size: 12px; color: var(--text2); line-height: 1.55; margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--border); font-style: italic; }
+
+.zoom-ctrl { position: absolute; top: 14px; right: 14px; display: flex; flex-direction: column; gap: 4px; z-index: 5; }
+.zoom-btn { width: 32px; height: 32px; background: #fff; border: 1px solid var(--border); border-radius: var(--radius-sm); font-size: 16px; cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: var(--shadow); color: var(--text); transition: background .15s; }
+.zoom-btn:hover { background: var(--bg); }
+
+/* ══════════════════════════════════════════
+   SCREEN: ADMIN
+══════════════════════════════════════════ */
+#screen-admin { flex-direction: column; }
+.admin-layout { display: flex; flex: 1; overflow: hidden; }
+.admin-nav {
+  width: 210px; background: #0f3d22; flex-shrink: 0; display: flex; flex-direction: column; padding: 16px 0;
+}
+.admin-nav .nav-item { display: flex; align-items: center; gap: 10px; padding: 11px 18px; font-size: 13px; font-weight: 500; color: rgba(255,255,255,.65); cursor: pointer; transition: all .15s; border-left: 3px solid transparent; }
+.admin-nav .nav-item:hover { color: #fff; background: rgba(255,255,255,.08); }
+.admin-nav .nav-item.active { color: #fff; background: rgba(255,255,255,.12); border-left-color: #6ee89a; }
+.admin-nav .nav-item i { font-size: 16px; width: 18px; text-align: center; }
+.admin-nav .nav-sep { height: 1px; background: rgba(255,255,255,.1); margin: 8px 16px; }
+
+.admin-content { flex: 1; overflow-y: auto; padding: 24px; }
+.admin-panel { display: none; }
+.admin-panel.active { display: block; }
+
+.page-title { font-family: 'Playfair Display', serif; font-size: 24px; color: var(--primary); margin-bottom: 4px; }
+.page-sub { font-size: 13px; color: var(--text2); margin-bottom: 22px; }
+
+/* Stat cards */
+.stat-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 24px; }
+.stat-card { background: #fff; border-radius: var(--radius); padding: 18px; border: 1px solid var(--border); }
+.stat-card .stat-label { font-size: 12px; font-weight: 600; color: var(--text2); text-transform: uppercase; letter-spacing: .5px; margin-bottom: 8px; }
+.stat-card .stat-num { font-size: 28px; font-weight: 700; }
+.stat-card .stat-sub { font-size: 12px; color: var(--text3); margin-top: 4px; }
+.stat-card.c-green .stat-num { color: var(--primary); }
+.stat-card.c-orange .stat-num { color: var(--accent); }
+.stat-card.c-blue .stat-num { color: var(--blue); }
+.stat-card.c-red .stat-num { color: var(--red); }
+
+/* Data table */
+.data-table-wrap { background: #fff; border-radius: var(--radius); border: 1px solid var(--border); overflow: hidden; }
+.table-head { padding: 14px 18px; display: flex; align-items: center; gap: 12px; border-bottom: 1px solid var(--border); }
+.table-head h3 { font-size: 15px; font-weight: 600; }
+.table-head .ml-auto { margin-left: auto; }
+.btn { padding: 8px 16px; border-radius: var(--radius-sm); font-size: 13px; font-weight: 600; cursor: pointer; border: none; font-family: inherit; transition: all .15s; display: inline-flex; align-items: center; gap: 6px; }
+.btn-primary { background: var(--primary); color: #fff; }
+.btn-primary:hover { background: var(--primary-light); }
+.btn-success { background: #2e7d32; color: #fff; }
+.btn-success:hover { background: #388e3c; }
+.btn-warn { background: var(--accent); color: #fff; }
+.btn-warn:hover { background: #f57c00; }
+.btn-danger { background: var(--red); color: #fff; }
+.btn-danger:hover { background: #d32f2f; }
+.btn-ghost { background: transparent; color: var(--text2); border: 1.5px solid var(--border); }
+.btn-ghost:hover { background: var(--bg); color: var(--text); }
+.btn-sm { padding: 5px 10px; font-size: 12px; border-radius: 6px; }
+
+table { width: 100%; border-collapse: collapse; font-size: 13px; }
+th { padding: 11px 14px; text-align: left; font-size: 11px; font-weight: 700; color: var(--text2); text-transform: uppercase; letter-spacing: .5px; background: var(--bg); border-bottom: 1px solid var(--border); }
+td { padding: 11px 14px; border-bottom: 1px solid var(--border); color: var(--text); }
+tr:last-child td { border-bottom: none; }
+tr:hover td { background: #f9fbf9; }
+
+.tag { font-size: 11px; padding: 3px 8px; border-radius: 10px; font-weight: 600; display: inline-block; }
+.tag-dtls { background: var(--blue-light); color: var(--blue); }
+.tag-ln { background: var(--primary-pale); color: var(--primary); }
+.tag-ocop { background: var(--accent-light); color: var(--accent); }
+.tag-dl { background: var(--purple-light); color: var(--purple); }
+.tag-approved { background: #e8f5e9; color: #2e7d32; }
+.tag-pending { background: #fff8e1; color: #f57f17; }
+
+/* Pending review */
+.review-card { background: #fff; border-radius: var(--radius); border: 1px solid var(--border); padding: 18px; margin-bottom: 14px; display: flex; align-items: flex-start; gap: 16px; }
+.review-card .rc-info { flex: 1; }
+.review-card h4 { font-size: 14px; font-weight: 700; margin-bottom: 6px; }
+.rc-diff { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 10px 0; }
+.rc-old, .rc-new { font-size: 12px; padding: 8px 10px; border-radius: var(--radius-sm); }
+.rc-old { background: #ffebee; color: #c62828; }
+.rc-new { background: #e8f5e9; color: #2e7d32; }
+.rc-old strong, .rc-new strong { display: block; font-size: 10px; text-transform: uppercase; letter-spacing: .5px; margin-bottom: 3px; }
+.review-actions { display: flex; gap: 8px; flex-direction: column; }
+
+/* Account table */
+.pin-cell { font-family: monospace; background: var(--bg); padding: 3px 8px; border-radius: 4px; font-size: 13px; }
+
+/* Config panel */
+.config-section { background: #fff; border-radius: var(--radius); border: 1px solid var(--border); padding: 20px; margin-bottom: 16px; }
+.config-section h3 { font-size: 15px; font-weight: 600; margin-bottom: 14px; color: var(--text); border-bottom: 1px solid var(--border); padding-bottom: 10px; }
+.config-row { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
+.config-row label { font-size: 13px; color: var(--text2); width: 200px; flex-shrink: 0; }
+.config-row input { flex: 1; padding: 8px 12px; border: 1.5px solid var(--border); border-radius: var(--radius-sm); font-size: 13px; font-family: inherit; outline: none; }
+.config-row input:focus { border-color: var(--primary); }
+.config-hint { font-size: 11px; color: var(--text3); margin-top: 2px; line-height: 1.5; }
+
+/* ══════════════════════════════════════════
+   SCREEN: OWNER
+══════════════════════════════════════════ */
+#screen-owner { flex-direction: column; }
+.owner-layout { display: flex; flex: 1; overflow: hidden; }
+.owner-nav { width: 200px; background: #1a3c2a; flex-shrink: 0; padding: 16px 0; }
+.owner-nav .nav-item { display: flex; align-items: center; gap: 10px; padding: 11px 18px; font-size: 13px; color: rgba(255,255,255,.65); cursor: pointer; transition: all .15s; border-left: 3px solid transparent; }
+.owner-nav .nav-item:hover { color: #fff; background: rgba(255,255,255,.08); }
+.owner-nav .nav-item.active { color: #fff; background: rgba(255,255,255,.1); border-left-color: #f9a825; }
+.owner-nav .nav-item i { font-size: 16px; width: 18px; text-align: center; }
+
+.owner-content { flex: 1; overflow-y: auto; padding: 24px; }
+.owner-panel { display: none; }
+.owner-panel.active { display: block; }
+
+.info-card { background: #fff; border-radius: var(--radius); border: 1px solid var(--border); padding: 22px; margin-bottom: 16px; }
+.info-card h3 { font-size: 15px; font-weight: 700; color: var(--primary); margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
+.field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 14px; }
+.field-group label { font-size: 12px; font-weight: 600; color: var(--text2); text-transform: uppercase; letter-spacing: .5px; display: block; margin-bottom: 6px; }
+.field-group input, .field-group textarea, .field-group select {
+  width: 100%; padding: 10px 12px; border: 1.5px solid var(--border); border-radius: var(--radius-sm);
+  font-size: 13px; font-family: inherit; color: var(--text); outline: none; transition: border .2s; background: #fff;
+}
+.field-group textarea { resize: vertical; min-height: 80px; }
+.field-group input:focus, .field-group textarea:focus { border-color: var(--primary); }
+.field-group input:disabled { background: var(--bg); color: var(--text2); }
+.field-full { grid-column: 1 / -1; }
+.status-banner { padding: 12px 16px; border-radius: var(--radius-sm); font-size: 13px; margin-bottom: 16px; display: flex; align-items: center; gap: 10px; }
+.status-banner.approved { background: #e8f5e9; color: #2e7d32; border: 1px solid #a5d6a7; }
+.status-banner.pending { background: #fff8e1; color: #f57f17; border: 1px solid #ffe082; }
+.price-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.price-table th { padding: 10px 12px; text-align: left; font-size: 11px; font-weight: 700; color: var(--text2); text-transform: uppercase; background: var(--bg); border-bottom: 1px solid var(--border); }
+.price-table td { padding: 10px 12px; border-bottom: 1px solid var(--border); }
+.price-table input { width: 100%; padding: 6px 10px; border: 1.5px solid var(--border); border-radius: 6px; font-size: 13px; font-family: inherit; outline: none; }
+.price-table input:focus { border-color: var(--accent); }
+
+/* ══════════════════════════════════════════
+   MODAL
+══════════════════════════════════════════ */
+.modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.45); z-index: 100; align-items: center; justify-content: center; }
+.modal-overlay.open { display: flex; }
+.modal { background: #fff; border-radius: 16px; padding: 28px; width: 100%; max-width: 480px; max-height: 85vh; overflow-y: auto; overflow-x: visible; box-shadow: 0 24px 80px rgba(0,0,0,.2); }
+.modal .field-group select { position: relative; z-index: 10; }
+.modal h2 { font-size: 18px; font-weight: 700; margin-bottom: 18px; color: var(--text); }
+.modal-actions { display: flex; gap: 10px; margin-top: 20px; justify-content: flex-end; }
+
+/* Toast */
+.toast-container { position: fixed; top: 70px; right: 20px; z-index: 999; display: flex; flex-direction: column; gap: 8px; }
+.toast { background: var(--text); color: #fff; padding: 12px 18px; border-radius: var(--radius-sm); font-size: 13px; font-weight: 500; box-shadow: var(--shadow-md); display: flex; align-items: center; gap: 10px; animation: slideIn .25s ease; }
+.toast.success { background: #2e7d32; }
+.toast.error { background: var(--red); }
+.toast.info { background: var(--blue); }
+@keyframes slideIn { from { transform: translateX(60px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+
+/* Loading */
+.loading-state { text-align: center; padding: 40px; color: var(--text2); }
+.spinner { width: 32px; height: 32px; border: 3px solid var(--border); border-top-color: var(--primary); border-radius: 50%; animation: spin .7s linear infinite; margin: 0 auto 14px; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.empty-state { text-align: center; padding: 40px; color: var(--text3); }
+.empty-state i { font-size: 40px; display: block; margin-bottom: 12px; }
+
+/* Notification badge */
+.notif-badge { background: #ef5350; color: #fff; font-size: 10px; font-weight: 700; width: 18px; height: 18px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; margin-left: 6px; }
+
+.gs-status { font-size: 12px; padding: 4px 10px; border-radius: 20px; display: inline-flex; align-items: center; gap: 6px; }
+.gs-status.connected { background: #e8f5e9; color: #2e7d32; }
+.gs-status.disconnected { background: #ffebee; color: #c62828; }
+.gs-status.loading { background: #e3f0ff; color: var(--blue); }
+.dot-pulse { width: 8px; height: 8px; border-radius: 50%; }
+.connected .dot-pulse { background: #4caf50; animation: pulse 1.5s infinite; }
+.disconnected .dot-pulse { background: #ef5350; }
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
+
+/* ══════════════════════════════════════════
+   FIELD SURVEY SCREEN - Mobile Optimized
+══════════════════════════════════════════ */
+#screen-field {
+  flex-direction: column;
+  background: #f0f4f1;
+  min-height: 100vh;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+.fd-navbar {
+  background: #1a5c38;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  padding: 14px 16px;
+  gap: 10px;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  box-shadow: 0 2px 8px rgba(0,0,0,.2);
+}
+.fd-brand { font-size: 15px; font-weight: 700; flex: 1; }
+.fd-user { font-size: 12px; color: #a8d5b5; }
+.fd-logout { background: rgba(255,255,255,.15); border: none; color: #fff; border-radius: 8px; padding: 7px 10px; cursor: pointer; font-size: 14px; }
+.fd-tabs {
+  display: flex;
+  background: #fff;
+  border-bottom: 2px solid #e0ebe3;
+  position: sticky;
+  top: 49px;
+  z-index: 99;
+}
+.fd-tab {
+  flex: 1;
+  border: none;
+  background: none;
+  padding: 13px 4px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text3);
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  font-family: inherit;
+  transition: color .2s;
+  border-bottom: 3px solid transparent;
+  margin-bottom: -2px;
+}
+.fd-tab i { font-size: 16px; }
+.fd-tab.active { color: #1a5c38; border-bottom-color: #1a5c38; }
+.fd-body { flex: 1; }
+.fd-panel { display: none; }
+.fd-panel.active { display: block; }
+.fd-card {
+  background: #fff;
+  border-radius: 14px;
+  padding: 16px;
+  margin: 12px 12px 0;
+  box-shadow: 0 1px 6px rgba(26,92,56,.07);
+}
+.fd-section-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: #1a5c38;
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.fd-gps-box {
+  background: #f0f7f3;
+  border: 2px dashed #a8d5b5;
+  border-radius: 12px;
+  padding: 16px;
+  text-align: center;
+  margin-bottom: 12px;
+}
+.fd-gps-coords {
+  font-size: 14px;
+  font-weight: 700;
+  color: #1a5c38;
+  margin-bottom: 4px;
+  letter-spacing: .3px;
+}
+.fd-gps-acc { font-size: 11px; color: var(--text3); margin-bottom: 10px; }
+.fd-btn-gps {
+  background: #1a5c38;
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  padding: 11px 22px;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: inherit;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  transition: background .2s;
+}
+.fd-btn-gps:active { background: #134428; }
+.fd-btn-gps.loading { background: #a8d5b5; color: #1a5c38; }
+.fd-row { display: flex; gap: 10px; }
+.fd-field { margin-bottom: 12px; flex: 1; }
+.fd-field label {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text2);
+  margin-bottom: 5px;
+}
+.fd-req { color: #e53935; }
+.fd-field input, .fd-field textarea, .fd-field select {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 12px 14px;
+  border: 1.5px solid #d4e0d7;
+  border-radius: 10px;
+  font-size: 15px;
+  font-family: inherit;
+  color: var(--text1);
+  background: #fff;
+  outline: none;
+  -webkit-appearance: none;
+  transition: border-color .2s;
+}
+.fd-field input:focus, .fd-field textarea:focus { border-color: #1a5c38; }
+.fd-field textarea { resize: none; line-height: 1.5; }
+.fd-btn-auto {
+  background: #e8f4ec;
+  color: #1a5c38;
+  border: none;
+  border-radius: 10px;
+  padding: 12px 14px;
+  font-size: 14px;
+  cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.fd-cat-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+.fd-cat-btn {
+  padding: 11px 8px;
+  border: 2px solid #d4e0d7;
+  border-radius: 10px;
+  background: #fff;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text2);
+  cursor: pointer;
+  font-family: inherit;
+  text-align: center;
+  transition: all .2s;
+  line-height: 1.4;
+}
+.fd-cat-btn.active {
+  border-color: #1a5c38;
+  background: #e8f4ec;
+  color: #1a5c38;
+}
+.fd-photo-area {
+  border: 2px dashed #d4e0d7;
+  border-radius: 12px;
+  padding: 24px 16px;
+  text-align: center;
+  cursor: pointer;
+  transition: border-color .2s, background .2s;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.fd-photo-area:active { background: #f0f7f3; border-color: #1a5c38; }
+.fd-note {
+  font-size: 11px;
+  color: #e8870a;
+  margin-top: 6px;
+  padding: 8px 10px;
+  background: #fff8f0;
+  border-radius: 8px;
+  line-height: 1.5;
+}
+.fd-btn-submit {
+  width: 100%;
+  padding: 16px;
+  background: #1a5c38;
+  color: #fff;
+  border: none;
+  border-radius: 14px;
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: inherit;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin-bottom: 12px;
+  box-shadow: 0 4px 16px rgba(26,92,56,.25);
+  transition: background .2s;
+}
+.fd-btn-submit:active { background: #134428; }
+.fd-btn-clear {
+  width: 100%;
+  padding: 13px;
+  background: #fff;
+  color: var(--text2);
+  border: 1.5px solid #d4e0d7;
+  border-radius: 14px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+.fd-btn-sm {
+  padding: 7px 12px;
+  background: #e8f4ec;
+  color: #1a5c38;
+  border: none;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+/* Danh sách điểm đã nhập */
+.fd-point-item {
+  margin: 0 12px 10px;
+  background: #fff;
+  border-radius: 12px;
+  padding: 14px;
+  box-shadow: 0 1px 5px rgba(26,92,56,.06);
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+}
+.fd-point-dot { width: 10px; height: 10px; border-radius: 50%; margin-top: 4px; flex-shrink: 0; }
+.fd-point-info { flex: 1; }
+.fd-point-name { font-size: 14px; font-weight: 700; color: var(--text1); }
+.fd-point-meta { font-size: 11px; color: var(--text3); margin-top: 3px; }
+.fd-point-status {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 20px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+/* Hướng dẫn */
+.fd-guide-step {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  margin-bottom: 14px;
+  font-size: 13px;
+  color: var(--text2);
+  line-height: 1.5;
+}
+.fd-step-num {
+  background: #1a5c38;
+  color: #fff;
+  border-radius: 50%;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+/* Upload ảnh progress */
+.fd-upload-bar {
+  height: 4px;
+  background: #d4e0d7;
+  border-radius: 2px;
+  margin-top: 8px;
+  overflow: hidden;
+  display: none;
+}
+.fd-upload-fill {
+  height: 100%;
+  background: #1a5c38;
+  border-radius: 2px;
+  transition: width .3s;
+}
+
+
+/* ══════════════════════════════════════════
+   RESPONSIVE MOBILE - Bản đồ công khai
+   Dưới 768px: bản đồ toàn màn hình,
+   danh sách kéo lên từ dưới như Google Maps
+══════════════════════════════════════════ */
+@media (max-width: 768px) {
+
+  /* Navbar gọn lại */
+  .navbar { padding: 10px 12px; }
+  .brand span { display: none; }
+  .gs-status { display: none; }
+  .btn-nav span { display: none; }
+
+  /* Toolbar tìm kiếm */
+  .map-toolbar {
+    padding: 8px 12px;
+    gap: 8px;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+  .map-toolbar::-webkit-scrollbar { display: none; }
+  .search-wrap { min-width: 140px; max-width: none; flex: 1; }
+  .filter-pills { flex-wrap: nowrap; gap: 6px; flex-shrink: 0; }
+  .stat-chip { display: none; }
+
+  /* Map body: bản đồ toàn màn hình */
+  .map-body { position: relative; }
+  .map-sidebar {
+    display: none; /* ẩn sidebar cũ trên mobile */
+  }
+  .map-canvas { width: 100% !important; }
+
+  /* ── Bottom Sheet: danh sách kéo lên từ dưới ── */
+  #mob-sheet {
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    background: #fff;
+    border-radius: 20px 20px 0 0;
+    box-shadow: 0 -4px 24px rgba(0,0,0,.15);
+    z-index: 1000;
+    transition: transform .35s cubic-bezier(.32,.72,0,1);
+    max-height: 85vh;
+    display: flex;
+    flex-direction: column;
+  }
+  /* 3 trạng thái: peek (nhìn thấy tay kéo), half (nửa), full (full) */
+  #mob-sheet.peek   { transform: translateY(calc(100% - 60px)); }
+  #mob-sheet.half   { transform: translateY(40%); }
+  #mob-sheet.full   { transform: translateY(0); }
+
+  /* Tay kéo */
+  .mob-handle-bar {
+    width: 40px; height: 4px;
+    background: #d4e0d7;
+    border-radius: 2px;
+    margin: 10px auto 0;
+    flex-shrink: 0;
+  }
+
+  /* Header bottom sheet */
+  .mob-sheet-head {
+    padding: 10px 16px 8px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-shrink: 0;
+    border-bottom: 1px solid #f0f4f1;
+  }
+  .mob-sheet-title {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--text1);
+  }
+  .mob-sheet-count {
+    font-size: 12px;
+    color: var(--text3);
+    background: #f0f4f1;
+    padding: 3px 10px;
+    border-radius: 20px;
+  }
+
+  /* Danh sách trong sheet */
+  .mob-sheet-list {
+    overflow-y: auto;
+    flex: 1;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Nút vị trí GPS trên bản đồ */
+  #mob-locate-btn {
+    position: fixed;
+    bottom: 72px;
+    right: 14px;
+    width: 44px; height: 44px;
+    background: #fff;
+    border: none;
+    border-radius: 50%;
+    box-shadow: 0 2px 10px rgba(0,0,0,.2);
+    font-size: 18px;
+    color: #1a5c38;
+    cursor: pointer;
+    z-index: 999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  /* Legend nhỏ hơn trên mobile */
+  .map-legend {
+    bottom: 70px !important;
+    left: 10px !important;
+    font-size: 11px !important;
+    padding: 8px 10px !important;
+  }
+  .map-legend h4 { margin-bottom: 5px !important; }
+  .leg-row { margin-bottom: 3px !important; }
+
+  /* Popup Leaflet trên mobile rộng hơn */
+  .leaflet-popup-content-wrapper {
+    max-width: 85vw !important;
+  }
+}
+
+/* Desktop: ẩn các element mobile */
+@media (min-width: 769px) {
+  #mob-sheet { display: none !important; }
+  #mob-locate-btn { display: none !important; }
+}
+
+</style>
+</head>
+<body>
+
+<!-- TOAST -->
+<div class="toast-container" id="toasts"></div>
+
+<!-- MODAL: Add/Edit Point -->
+<div class="modal-overlay" id="modal-point">
+  <div class="modal">
+    <h2 id="modal-point-title">Thêm địa điểm mới</h2>
+    <div class="field-row">
+      <div class="field-group"><label>Mã điểm</label><input id="fp-id" placeholder="DD001" /></div>
+      <div class="field-group"><label>Phân loại</label>
+        <select id="fp-cat">
+          <option>Di tích lịch sử</option><option>Làng nghề</option>
+          <option>Sản phẩm OCOP</option><option>Du lịch</option>
+        </select>
+      </div>
+    </div>
+    <div class="field-group field-full" style="margin-bottom:14px"><label>Tên địa điểm</label><input id="fp-name" placeholder="Nhập tên địa điểm..."/></div>
+    <div class="field-group field-full" style="margin-bottom:14px"><label>Địa chỉ</label><input id="fp-addr" placeholder="Thôn..., Xã..."/></div>
+    <div class="field-row">
+      <div class="field-group"><label>Vĩ độ (Latitude)</label><input id="fp-lat" type="number" step="0.0001" placeholder="10.2988"/></div>
+      <div class="field-group"><label>Kinh độ (Longitude)</label><input id="fp-lng" type="number" step="0.0001" placeholder="105.713"/></div>
+    </div>
+    <div class="config-hint" style="margin-bottom:12px;font-size:11px;color:var(--text3)"><i class="fa-solid fa-circle-info"></i> Mở Google Maps, nhấn giữ vào vị trí → sao chép tọa độ (số đầu là Vĩ độ, số sau là Kinh độ)</div>
+    <div class="field-row">
+      <div class="field-group"><label>Số điện thoại</label><input id="fp-phone" placeholder="09xx-xxx-xxx"/></div>
+      <div class="field-group"><label>Giá dịch vụ/sản phẩm</label><input id="fp-price" placeholder="Miễn phí / 50.000đ"/></div>
+    </div>
+    <div class="field-group field-full" style="margin-bottom:14px"><label>Mô tả ngắn</label><textarea id="fp-desc" rows="3" placeholder="Giới thiệu về địa điểm..."></textarea></div>
+    <div class="field-group field-full" style="margin-bottom:0"><label>Link hình ảnh</label><input id="fp-img" placeholder="https://..."/></div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal('modal-point')">Hủy</button>
+      <button class="btn btn-primary" onclick="savePoint()"><i class="fa-solid fa-save"></i> Lưu địa điểm</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: Add Account -->
+<div class="modal-overlay" id="modal-account">
+  <div class="modal">
+    <h2>Cấp tài khoản mới</h2>
+    <div class="field-row">
+      <div class="field-group"><label>Mã điểm</label>
+        <select id="fa-id"></select>
+      </div>
+      <div class="field-group"><label>Quyền hạn</label>
+        <select id="fa-role"><option value="User">User (Chủ cơ sở)</option><option value="Admin">Admin (Cán bộ)</option></select>
+      </div>
+    </div>
+    <div class="field-group field-full" style="margin-bottom:14px"><label>Tên đại diện</label><input id="fa-name" placeholder="Nguyễn Văn A"/></div>
+    <div class="field-group field-full"><label>Mã PIN (hệ thống tự tạo)</label>
+      <input id="fa-pin" readonly style="font-family:monospace;background:var(--bg);letter-spacing:2px" />
+      <div class="config-hint" style="margin-top:4px">Mã PIN này cấp cho chủ cơ sở để đăng nhập vào hệ thống</div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal('modal-account')">Hủy</button>
+      <button class="btn btn-primary" onclick="saveAccount()"><i class="fa-solid fa-user-plus"></i> Cấp tài khoản</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: GSheets Config -->
+<div class="modal-overlay" id="modal-gs">
+  <div class="modal">
+    <h2><i class="fa-brands fa-google" style="color:#ea4335"></i> Kết nối Google Sheets</h2>
+    <div class="config-hint" style="margin-bottom:16px;font-size:13px;color:var(--text2);line-height:1.6">
+      Để kết nối với Google Sheets, bạn cần:<br>
+      1. Mở Google Sheets → <strong>Extensions → Apps Script</strong><br>
+      2. Dán đoạn code Apps Script (xem bên dưới) → Deploy → Web App<br>
+      3. Sao chép URL Web App và dán vào ô bên dưới
+    </div>
+    <div class="field-group" style="margin-bottom:14px"><label>URL Web App (Apps Script)</label>
+      <div>
+        <label style="font-size:12px;font-weight:600;color:var(--text2);display:block;margin-bottom:4px">
+          URL Apps Script <span style="color:#e53935">*</span>
+        </label>
+        <input id="gs-script-url" placeholder="https://script.google.com/macros/s/.../exec" style="font-size:12px"/>
+        <div style="font-size:11px;color:var(--text3);margin-top:3px">
+          Vào Google Sheets → Extensions → Apps Script → Deploy → Copy URL
+        </div>
+      </div>
+      <input id="gs-url" type="hidden"/>
+    </div>
+    <div style="background:var(--bg);border-radius:var(--radius-sm);padding:12px 14px;margin-bottom:14px;font-size:11px;font-family:monospace;color:var(--text2);line-height:1.7;overflow:auto;max-height:200px">
+// Apps Script: dán vào script.google.com<br>
+function doGet(e) {<br>
+&nbsp;&nbsp;var ss = SpreadsheetApp.getActiveSpreadsheet();<br>
+&nbsp;&nbsp;var sh = ss.getSheetByName("DIEM_DEN");<br>
+&nbsp;&nbsp;var data = sh.getDataRange().getValues();<br>
+&nbsp;&nbsp;return ContentService<br>
+&nbsp;&nbsp;&nbsp;&nbsp;.createTextOutput(JSON.stringify(data))<br>
+&nbsp;&nbsp;&nbsp;&nbsp;.setMimeType(ContentService.MimeType.JSON);<br>
+}<br>
+function doPost(e) {<br>
+&nbsp;&nbsp;var p = JSON.parse(e.postData.contents);<br>
+&nbsp;&nbsp;var ss = SpreadsheetApp.getActiveSpreadsheet();<br>
+&nbsp;&nbsp;var sh = ss.getSheetByName(p.sheet || "DIEM_DEN");<br>
+&nbsp;&nbsp;if(p.action === "update") {<br>
+&nbsp;&nbsp;&nbsp;&nbsp;sh.getRange(p.row,p.col).setValue(p.value);<br>
+&nbsp;&nbsp;} else if(p.action === "append") {<br>
+&nbsp;&nbsp;&nbsp;&nbsp;sh.appendRow(p.row);<br>
+&nbsp;&nbsp;}<br>
+&nbsp;&nbsp;return ContentService<br>
+&nbsp;&nbsp;&nbsp;&nbsp;.createTextOutput("OK")<br>
+&nbsp;&nbsp;&nbsp;&nbsp;.setMimeType(ContentService.MimeType.TEXT);<br>
+}
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal('modal-gs')">Đóng</button>
+      <button class="btn btn-primary" onclick="saveGsConfig()"><i class="fa-solid fa-plug"></i> Kết nối</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════ SCREEN: LOGIN ══════════ -->
+<div class="screen" id="screen-login">
+  <div class="login-box">
+    <div class="login-logo">
+      <div class="icon-wrap"><i class="fa-solid fa-map-location-dot"></i></div>
+      <h1>Bản Đồ Số</h1>
+      <p>Hệ thống quản lý địa điểm địa phương</p>
+    </div>
+    <div class="role-tabs">
+      <button class="role-tab active" onclick="switchRole('admin',this)"><i class="fa-solid fa-shield-halved"></i> Cán bộ xã</button>
+      <button class="role-tab" onclick="switchRole('owner',this)"><i class="fa-solid fa-store"></i> Chủ cơ sở</button>
+      <button class="role-tab" onclick="switchRole('field',this)"><i class="fa-solid fa-person-walking"></i> Thực địa</button>
+    </div>
+    <div id="login-field-fields" style="display:none">
+      <div class="form-group"><label>Mã PIN Sinh viên</label><input id="field-pin" type="password" placeholder="Nhập mã PIN thực địa..." /></div>
+    </div>
+    <div id="login-admin-fields">
+      <div class="form-group"><label>Mã PIN Admin</label><input id="admin-pin" type="password" placeholder="Nhập mã PIN..." /></div>
+    </div>
+    <div id="login-owner-fields" style="display:none">
+      <div class="form-group"><label>Mã điểm</label><input id="owner-id" placeholder="VD: DD001" /></div>
+      <div class="form-group"><label>Mã PIN</label><input id="owner-pin" type="password" placeholder="Nhập mã PIN..." /></div>
+    </div>
+    <button class="btn-login" onclick="doLogin()"><i class="fa-solid fa-right-to-bracket"></i> Đăng nhập</button>
+    <div class="login-err" id="login-err"></div>
+    <div class="login-hint">Bản Đồ Số Xã Tân Dương · Tỉnh Đồng Tháp · Kết nối Google Sheets</div>
+    <a class="btn-public" onclick="gotoPublic()"><i class="fa-solid fa-globe"></i> Xem bản đồ công khai (không cần đăng nhập)</a>
+  </div>
+</div>
+
+<!-- ══════════ SCREEN: PUBLIC MAP ══════════ -->
+<div class="screen active" id="screen-public">
+  <div class="navbar">
+    <i class="fa-solid fa-map-location-dot" style="font-size:20px"></i>
+    <span class="brand">Bản Đồ Số <span>Địa phương</span></span>
+    <div class="navbar-right">
+      <span class="gs-status disconnected" id="gs-status-pub">
+        <span class="dot-pulse"></span> Chưa kết nối GSheets
+      </span>
+      <button class="btn-nav" onclick="refreshData()"><i class="fa-solid fa-rotate"></i> Làm mới</button>
+      <button class="btn-nav" onclick="showScreen('screen-login')"><i class="fa-solid fa-right-to-bracket"></i> Đăng nhập</button>
+    </div>
+  </div>
+  <div class="map-toolbar">
+    <div class="search-wrap">
+      <i class="fa-solid fa-magnifying-glass"></i>
+      <input type="text" placeholder="Tìm địa điểm, làng nghề, sản phẩm..." id="pub-search" oninput="filterPublic()">
+    </div>
+    <div class="filter-pills">
+      <span class="pill pill-all" data-f="all" onclick="setPubFilter(this)">Tất cả</span>
+      <span class="pill pill-dtls" data-f="Di tích lịch sử" onclick="setPubFilter(this)">Di tích lịch sử</span>
+      <span class="pill pill-ln" data-f="Làng nghề" onclick="setPubFilter(this)">Làng nghề</span>
+      <span class="pill pill-ocop" data-f="Sản phẩm OCOP" onclick="setPubFilter(this)">Sản phẩm OCOP</span>
+      <span class="pill pill-dl" data-f="Du lịch" onclick="setPubFilter(this)">Du lịch</span>
+    </div>
+    <span class="stat-chip" id="pub-count">0 địa điểm</span>
+  </div>
+  <div class="map-body">
+    <div class="map-sidebar">
+      <div class="sidebar-head">Danh sách địa điểm</div>
+      <div id="point-list"></div>
+    </div>
+    <div class="map-canvas" id="map-canvas">
+      <div id="leaflet-map" style="width:100%;height:100%;z-index:1;"></div>
+      <div class="map-legend">
+        <h4>Chú giải</h4>
+        <div class="leg-row"><div class="leg-dot" style="background:#1565c0"></div><span>Di tích lịch sử</span></div>
+        <div class="leg-row"><div class="leg-dot" style="background:#1a5c38"></div><span>Làng nghề</span></div>
+        <div class="leg-row"><div class="leg-dot" style="background:#e8870a"></div><span>Sản phẩm OCOP</span></div>
+        <div class="leg-row"><div class="leg-dot" style="background:#6a1b9a"></div><span>Du lịch</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── MOBILE: Bottom Sheet danh sách địa điểm ── -->
+  <div id="mob-sheet" class="peek">
+    <div class="mob-handle-bar" id="mob-handle"></div>
+    <div class="mob-sheet-head">
+      <span class="mob-sheet-title">Địa điểm gần đây</span>
+      <span class="mob-sheet-count" id="mob-count">0 địa điểm</span>
+    </div>
+    <div class="mob-sheet-list" id="mob-list"></div>
+  </div>
+
+  <!-- Nút định vị GPS trên bản đồ mobile -->
+  <button id="mob-locate-btn" onclick="mobLocate()" title="Vị trí của tôi">
+    <i class="fa-solid fa-location-crosshairs"></i>
+  </button>
+
+</div>
+
+<!-- ══════════ SCREEN: ADMIN ══════════ -->
+<div class="screen" id="screen-admin">
+  <div class="navbar">
+    <i class="fa-solid fa-map-location-dot" style="font-size:20px"></i>
+    <span class="brand">Bản Đồ Số <span>/ Quản trị</span></span>
+    <div class="navbar-right">
+      <span class="gs-status disconnected" id="gs-status-admin">
+        <span class="dot-pulse"></span> Chưa kết nối
+      </span>
+      <button class="btn-nav" onclick="openModal('modal-gs')"><i class="fa-brands fa-google"></i> Cấu hình GSheets</button>
+      <button class="btn-nav" onclick="refreshData()"><i class="fa-solid fa-rotate"></i> Đồng bộ</button>
+      <button class="btn-nav" style="background:#e8870a;color:#fff;border-color:#e8870a" onclick="bulkFillImagesAdmin()" title="Điền link ảnh hàng loạt từ Drive (đặt tên file = Mã điểm)"><i class="fa-solid fa-images"></i> Điền ảnh loạt</button>
+      <button class="btn-nav" style="background:#6a1b9a;color:#fff;border-color:#6a1b9a" onclick="testGSConnection()" title="Kiểm tra kết nối Apps Script"><i class="fa-solid fa-plug"></i> Test kết nối</button>
+      <button class="btn-nav" onclick="showScreen('screen-login')"><i class="fa-solid fa-right-from-bracket"></i> Đăng xuất</button>
+    </div>
+  </div>
+  <div class="admin-layout">
+    <div class="admin-nav">
+      <div class="nav-item active" data-panel="admin-dashboard" onclick="switchAdminPanel(this)"><i class="fa-solid fa-gauge"></i> Tổng quan</div>
+      <div class="nav-item" data-panel="admin-map" onclick="switchAdminPanel(this)"><i class="fa-solid fa-map"></i> Bản đồ</div>
+      <div class="nav-sep"></div>
+      <div class="nav-item" data-panel="admin-review" onclick="switchAdminPanel(this)">
+        <i class="fa-solid fa-clipboard-check"></i> Kiểm duyệt
+        <span class="notif-badge" id="review-badge">0</span>
+      </div>
+      <div class="nav-item" data-panel="admin-points" onclick="switchAdminPanel(this)"><i class="fa-solid fa-map-pin"></i> Địa điểm</div>
+      <div class="nav-item" data-panel="admin-accounts" onclick="switchAdminPanel(this)"><i class="fa-solid fa-users"></i> Tài khoản</div>
+      <div class="nav-sep"></div>
+      <div class="nav-item" data-panel="admin-config" onclick="switchAdminPanel(this)"><i class="fa-solid fa-gear"></i> Cài đặt</div>
+    </div>
+    <div class="admin-content">
+
+      <!-- Dashboard -->
+      <div class="admin-panel active" id="admin-dashboard">
+        <div class="page-title">Tổng quan hệ thống</div>
+        <div class="page-sub" id="last-sync-txt">Chưa đồng bộ với Google Sheets</div>
+        <div class="stat-grid">
+          <div class="stat-card c-green"><div class="stat-label">Tổng địa điểm</div><div class="stat-num" id="s-total">0</div><div class="stat-sub">Đang hiển thị trên bản đồ</div></div>
+          <div class="stat-card c-orange"><div class="stat-label">Chờ duyệt</div><div class="stat-num" id="s-pending">0</div><div class="stat-sub">Yêu cầu cập nhật thông tin</div></div>
+          <div class="stat-card c-blue"><div class="stat-label">Tài khoản</div><div class="stat-num" id="s-accounts">0</div><div class="stat-sub">Chủ cơ sở đã cấp quyền</div></div>
+          <div class="stat-card c-red"><div class="stat-label">OCOP</div><div class="stat-num" id="s-ocop">0</div><div class="stat-sub">Cơ sở có sản phẩm OCOP</div></div>
+        </div>
+        <div class="data-table-wrap">
+          <div class="table-head"><h3>Phân bổ theo loại</h3></div>
+          <table><thead><tr><th>Phân loại</th><th>Số lượng</th><th>Tỉ lệ</th><th>Trạng thái</th></tr></thead>
+          <tbody id="cat-breakdown"></tbody></table>
+        </div>
+      </div>
+
+      <!-- Map panel (admin) -->
+      <div class="admin-panel" id="admin-map">
+        <div class="page-title">Bản đồ địa điểm</div>
+        <div class="page-sub">Xem toàn bộ địa điểm. Click vào điểm để chỉnh sửa nhanh.</div>
+        <div style="background:#fff;border-radius:var(--radius);border:1px solid var(--border);overflow:hidden;height:520px">
+          <div id="admin-map-canvas" style="height:100%;position:relative;">
+            <div id="leaflet-admin-map" style="width:100%;height:100%;z-index:1;"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Review -->
+      <div class="admin-panel" id="admin-review">
+        <div class="page-title">Kiểm duyệt thay đổi</div>
+        <div class="page-sub">Các yêu cầu cập nhật thông tin từ chủ cơ sở đang chờ phê duyệt.</div>
+        <div id="review-list"></div>
+      </div>
+
+      <!-- Points -->
+      <div class="admin-panel" id="admin-points">
+        <div class="page-title">Quản lý địa điểm</div>
+        <div class="page-sub">Thêm, sửa, xoá các địa điểm trên bản đồ số.</div>
+        <div class="data-table-wrap">
+          <div class="table-head">
+            <h3>Danh sách địa điểm</h3>
+            <div class="ml-auto" style="display:flex;gap:8px">
+              <button class="btn btn-ghost btn-sm" onclick="refreshData()"><i class="fa-solid fa-rotate"></i> Làm mới</button>
+              <button class="btn btn-primary btn-sm" onclick="openAddPoint()"><i class="fa-solid fa-plus"></i> Thêm địa điểm</button>
+            </div>
+          </div>
+          <table><thead><tr><th>Mã</th><th>Tên địa điểm</th><th>Phân loại</th><th>Địa chỉ</th><th>SĐT</th><th>Trạng thái</th><th>Thao tác</th></tr></thead>
+          <tbody id="points-tbody"></tbody></table>
+        </div>
+      </div>
+
+      <!-- Accounts -->
+      <div class="admin-panel" id="admin-accounts">
+        <div class="page-title">Quản lý tài khoản</div>
+        <div class="page-sub">Cấp mã PIN cho chủ cơ sở để họ tự cập nhật thông tin.</div>
+        <div class="data-table-wrap">
+          <div class="table-head">
+            <h3>Danh sách tài khoản</h3>
+            <div class="ml-auto">
+              <button class="btn btn-primary btn-sm" onclick="openAddAccount()"><i class="fa-solid fa-user-plus"></i> Cấp tài khoản</button>
+            </div>
+          </div>
+          <table><thead><tr><th>Mã điểm</th><th>Tên đại diện</th><th>Mã PIN</th><th>Quyền hạn</th><th>Thao tác</th></tr></thead>
+          <tbody id="accounts-tbody"></tbody></table>
+        </div>
+      </div>
+
+      <!-- Config -->
+      <div class="admin-panel" id="admin-config">
+        <div class="page-title">Cài đặt hệ thống</div>
+        <div class="page-sub">Cấu hình kết nối Google Sheets và các thông số hệ thống.</div>
+        <div class="config-section">
+          <h3><i class="fa-brands fa-google" style="color:#ea4335"></i> Kết nối Google Sheets API</h3>
+          <div class="config-row">
+            <label>Trạng thái kết nối</label>
+            <span class="gs-status disconnected" id="gs-status-cfg"><span class="dot-pulse"></span> Chưa kết nối</span>
+          </div>
+          <div class="config-row">
+            <label>URL Apps Script Web App</label>
+            <div style="flex:1">
+              <div>
+                <label style="font-size:12px;font-weight:600;color:var(--text2);display:block;margin-bottom:4px">
+                  URL Apps Script <span style="color:#e53935">*</span>
+                </label>
+                <input id="cfg-script-url" placeholder="https://script.google.com/macros/s/.../exec" style="font-size:12px"/>
+                <div style="font-size:11px;color:var(--text3);margin-top:3px">
+                  Vào Google Sheets → Extensions → Apps Script → Deploy → Copy URL exec
+                </div>
+              </div>
+              <input id="cfg-gs-url" type="hidden"/>
+              <div class="config-hint">Triển khai Google Apps Script trong Google Sheets → Extensions → Apps Script → Deploy → Web App</div>
+            </div>
+          </div>
+          <div class="config-row">
+            <label>Tên Sheet dữ liệu chính</label>
+            <input id="cfg-sheet-name" value="DIEM_DEN" style="max-width:200px"/>
+          </div>
+          <div style="margin-top:14px;display:flex;gap:10px">
+            <button class="btn btn-primary" onclick="saveGsConfig()"><i class="fa-solid fa-plug"></i> Lưu & Kết nối</button>
+            <button class="btn btn-ghost" onclick="testConnection()"><i class="fa-solid fa-wifi"></i> Kiểm tra kết nối</button>
+          </div>
+        </div>
+        <div class="config-section">
+          <h3><i class="fa-solid fa-shield-halved"></i> Bảo mật</h3>
+          <div class="config-row">
+            <label>Mã PIN Admin</label>
+            <input type="password" id="cfg-admin-pin" placeholder="Đổi mã PIN admin..." style="max-width:220px"/>
+          </div>
+          <button class="btn btn-warn btn-sm" style="margin-top:8px" onclick="showToast('Đã cập nhật mã PIN Admin','success')"><i class="fa-solid fa-key"></i> Đổi mã PIN</button>
+        </div>
+        <div class="config-section" style="margin-top:16px">
+          <h3><i class="fa-solid fa-person-walking"></i> PIN Thực địa (Sinh viên)</h3>
+          <div class="config-row" style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+            <input id="setting-field-pin" type="text" placeholder="Nhập PIN mới (tối thiểu 4 ký tự)" style="flex:1;min-width:180px;padding:9px 14px;border:1.5px solid #d4e0d7;border-radius:10px;font-size:14px;font-family:inherit"/>
+            <button onclick="saveFieldPin()" style="padding:9px 16px;background:#1a5c38;color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;white-space:nowrap"><i class="fa-solid fa-floppy-disk"></i> Lưu PIN</button>
+          </div>
+          <div style="font-size:11px;color:var(--text3);margin-top:6px;line-height:1.5"><i class="fa-solid fa-circle-info"></i> PIN hiện tại: <strong id="current-field-pin">1234</strong>. Chia sẻ PIN này cho sinh viên đi thực địa.</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- ══════════ SCREEN: OWNER ══════════ -->
+<div class="screen" id="screen-owner">
+  <div class="navbar">
+    <i class="fa-solid fa-store" style="font-size:18px"></i>
+    <span class="brand">Cổng Chủ Cơ Sở <span id="owner-brand-name"></span></span>
+    <div class="navbar-right">
+      <span class="nav-badge" id="owner-status-badge">Đã duyệt</span>
+      <button class="btn-nav" onclick="showScreen('screen-login')"><i class="fa-solid fa-right-from-bracket"></i> Đăng xuất</button>
+    </div>
+  </div>
+  <div class="owner-layout">
+    <div class="owner-nav">
+      <div class="nav-item active" data-panel="owner-info" onclick="switchOwnerPanel(this)"><i class="fa-solid fa-circle-info"></i> Thông tin cơ sở</div>
+      <div class="nav-item" data-panel="owner-price" onclick="switchOwnerPanel(this)"><i class="fa-solid fa-tags"></i> Cập nhật giá</div>
+      <div class="nav-item" data-panel="owner-status" onclick="switchOwnerPanel(this)"><i class="fa-solid fa-clock-rotate-left"></i> Lịch sử duyệt</div>
+    </div>
+    <div class="owner-content">
+
+      <!-- Info panel -->
+      <div class="owner-panel active" id="owner-info">
+        <div class="page-title" id="owner-page-title">Thông tin cơ sở</div>
+        <div class="page-sub">Chỉnh sửa số điện thoại và mô tả. Thay đổi sẽ chờ cán bộ xã phê duyệt trước khi hiển thị.</div>
+        <div id="owner-status-banner" class="status-banner approved" style="display:none">
+          <i class="fa-solid fa-circle-check"></i>
+          <span id="owner-status-text">Thông tin đã được phê duyệt và hiển thị trên bản đồ.</span>
+        </div>
+        <div class="info-card">
+          <h3><i class="fa-solid fa-lock" style="color:var(--text3)"></i> Thông tin gốc (không thay đổi)</h3>
+          <div class="field-row">
+            <div class="field-group"><label>Mã điểm</label><input id="ow-id" disabled /></div>
+            <div class="field-group"><label>Phân loại</label><input id="ow-cat" disabled /></div>
+          </div>
+          <div class="field-group" style="margin-bottom:14px"><label>Tên cơ sở / địa điểm</label><input id="ow-name" disabled /></div>
+          <div class="field-group"><label>Địa chỉ</label><input id="ow-addr" disabled /></div>
+        </div>
+        <div class="info-card">
+          <h3><i class="fa-solid fa-pen-to-square" style="color:var(--accent)"></i> Thông tin có thể cập nhật</h3>
+          <div class="field-row">
+            <div class="field-group">
+              <label>Số điện thoại <span style="color:var(--accent)">✎</span></label>
+              <input id="ow-phone-new" placeholder="09xx-xxx-xxx"/>
+            </div>
+            <div class="field-group">
+              <label>Số điện thoại hiện tại</label>
+              <input id="ow-phone-cur" disabled />
+            </div>
+          </div>
+          <div class="field-group field-full" style="margin-bottom:0">
+            <label>Mô tả / Giới thiệu <span style="color:var(--accent)">✎</span></label>
+            <textarea id="ow-desc-new" rows="4" placeholder="Cập nhật mô tả về cơ sở, sản phẩm, dịch vụ..."></textarea>
+          </div>
+          <div style="margin-top:14px;display:flex;gap:10px">
+            <button class="btn btn-primary" onclick="ownerSubmitInfo()"><i class="fa-solid fa-paper-plane"></i> Gửi yêu cầu cập nhật</button>
+            <button class="btn btn-ghost" onclick="ownerClearInfo()"><i class="fa-solid fa-xmark"></i> Hủy</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Price panel -->
+      <div class="owner-panel" id="owner-price">
+        <div class="page-title">Cập nhật giá dịch vụ / sản phẩm</div>
+        <div class="page-sub">Thay đổi giá sẽ chờ cán bộ xã kiểm duyệt trước khi hiển thị ra bản đồ công khai.</div>
+        <div class="info-card">
+          <h3><i class="fa-solid fa-tags"></i> Bảng giá sản phẩm / dịch vụ</h3>
+          <table class="price-table">
+            <thead><tr><th>Tên sản phẩm / dịch vụ</th><th>Giá hiện tại</th><th>Giá mới (đề xuất)</th><th>Đơn vị</th></tr></thead>
+            <tbody id="price-tbody"></tbody>
+          </table>
+          <div style="margin-top:16px;display:flex;gap:10px;align-items:center">
+            <button class="btn btn-primary" onclick="ownerSubmitPrice()"><i class="fa-solid fa-paper-plane"></i> Gửi cập nhật giá</button>
+            <button class="btn btn-ghost btn-sm" onclick="addPriceRow()"><i class="fa-solid fa-plus"></i> Thêm dòng</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- History panel -->
+      <div class="owner-panel" id="owner-status">
+        <div class="page-title">Lịch sử phê duyệt</div>
+        <div class="page-sub">Theo dõi trạng thái các yêu cầu cập nhật thông tin đã gửi.</div>
+        <div id="owner-history"></div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script>
+// ══════════════════════════════════════════
+//  STATE & CONFIG
+// ══════════════════════════════════════════
+const STATE = {
+  // Cấu hình nhúng sẵn - không cần người dùng thiết lập
+  gsSheetId: '1Eh0IDXWC_5dzjDnqR_nl1A7I7u04p4DDyLCG0jVHVXE',
+  gsScriptUrl: 'https://script.google.com/macros/s/AKfycbzhjl1o4ylulWa4Q2zMGt2xn70lZQcjadUmRZCqUt91F1u7YOlhQ53zS7MGse3S13Lv/exec',
+  gsUrl: localStorage.getItem('gsUrl') || 'https://script.google.com/macros/s/AKfycbzaoApb2_tH7vjFqJyrMMIAhyJhkfVgm67Gr95j14GFquR6Bx6lGhOTlVEivDuL1VNu/exec',
+  fieldPin: localStorage.getItem('fieldPin') || '1234',
+  gsHeaderRowIdx: 0,   // Tự detect khi fetch GSheets
+  gsColMap: null,      // Tự detect khi fetch GSheets
+  gsConnected: false,
+  points: [],
+  accounts: [],
+  currentUser: null,
+  currentRole: null,
+  pubFilter: 'all',
+  selectedPoint: null,
+  mapScale: 1,
+  editingPointIdx: null,
+};
+
+// ── Default demo data ──
+// Không có dữ liệu mẫu - tải thẳng từ Google Sheets
+const DEMO_ACCOUNTS = [
+  {id:'ADMIN', name:'Cán bộ xã phụ trách', pin:'1234', role:'Admin'},
+];
+
+const CAT_COLORS = {
+  'Di tích lịch sử':{dot:'#1565c0',light:'#e3f0ff',text:'#0c447c'},
+  'Làng nghề':      {dot:'#1a5c38',light:'#e8f5ee',text:'#0f3d22'},
+  'Sản phẩm OCOP':  {dot:'#e8870a',light:'#fef3e2',text:'#7a4500'},
+  'Du lịch':        {dot:'#6a1b9a',light:'#f3e5f5',text:'#4a1370'},
+};
+
+// Khởi động với mảng rỗng - dữ liệu thật tải từ GSheets
+STATE.points = [];
+STATE.accounts = JSON.parse(localStorage.getItem('accounts') || 'null') || DEMO_ACCOUNTS;
+// Xóa cache points cũ trong localStorage để không hiện dữ liệu mẫu tồn đọng
+localStorage.removeItem('points');
+
+function saveLocal() {
+  localStorage.setItem('points', JSON.stringify(STATE.points));
+  localStorage.setItem('accounts', JSON.stringify(STATE.accounts));
+}
+
+// ══════════════════════════════════════════
+//  GOOGLE SHEETS API
+// ══════════════════════════════════════════
+// ── Dò tên cột theo từ khoá, không phụ thuộc tên chính xác ──
+function detectCol(headers, keywords) {
+  const kws = keywords.map(k => k.toLowerCase());
+  // Ưu tiên cột khớp TẤT CẢ từ khoá
+  let best = headers.findIndex(h => {
+    const hn = String(h).toLowerCase().replace(/\s+/g,' ').trim();
+    return kws.every(k => hn.includes(k));
+  });
+  if(best >= 0) return best;
+  // Fallback: khớp từ khoá đầu tiên
+  return headers.findIndex(h => {
+    const hn = String(h).toLowerCase().replace(/\s+/g,' ').trim();
+    return kws.some(k => hn.includes(k));
+  });
+}
+
+async function fetchFromGSheets() {
+  try {
+    // Dùng CSV export - đơn giản, không bị CORS, không cần Apps Script
+    const csvUrl = 'https://docs.google.com/spreadsheets/d/1Eh0IDXWC_5dzjDnqR_nl1A7I7u04p4DDyLCG0jVHVXE/export?format=csv&sheet=DIEM_DEN';
+    const res = await fetch(csvUrl);
+    if(!res.ok) throw new Error('HTTP '+res.status);
+    const csv = await res.text();
+
+    // Parse CSV thành 2D array
+    const raw = parseCSV(csv);
+    if(!Array.isArray(raw) || raw.length < 2) return null;
+
+    // Tìm hàng header thật: phải có ít nhất 2 từ khoá quan trọng
+    let headerRowIdx = 0;
+    for(let i=0; i<Math.min(5,raw.length); i++){
+      const row = raw[i].map(c=>String(c||'').toLowerCase());
+      const hasMa   = row.some(c=>c.includes('mã điểm') || c==='mã');
+      const hasTen  = row.some(c=>c.includes('tên điểm') || c==='tên điểm');
+      const hasLoai = row.some(c=>c.includes('phân loại'));
+      if((hasMa && hasTen) || (hasMa && hasLoai)) { headerRowIdx=i; break; }
+    }
+    STATE.gsHeaderRowIdx = headerRowIdx;
+    const headers = raw[headerRowIdx];
+    const rows = raw.slice(headerRowIdx+1);
+
+    const C = {
+      id:     detectCol(headers, ['mã điểm','mã']),
+      name:   detectCol(headers, ['tên điểm','tên']),
+      cat:    detectCol(headers, ['phân loại','loại']),
+      addr:   detectCol(headers, ['địa chỉ','địa']),
+      coord:  detectCol(headers, ['tọa độ','toạ độ','kinh','vĩ']),
+      img:    detectCol(headers, ['hình ảnh','ảnh','link']),
+      desc:   detectCol(headers, ['mô tả','mô','giới thiệu']),
+      phone:  detectCol(headers, ['số đt chính thức','sđt chính','số điện thoại chính']),
+      price:  detectCol(headers, ['giá sản phẩm chính thức','giá chính','giá sản phẩm']),
+      pendingSdt: detectCol(headers, ['sđt chờ','số đt chờ']),
+      pendingGia: detectCol(headers, ['giá chờ']),
+      status: detectCol(headers, ['trạng thái','duyệt']),
+    };
+
+    STATE.gsColMap = {
+      phone:      C.phone >= 0      ? C.phone + 1      : 8,
+      price:      C.price >= 0      ? C.price + 1      : 9,
+      pendingSdt: C.pendingSdt >= 0 ? C.pendingSdt + 1 : 10,
+      pendingGia: C.pendingGia >= 0 ? C.pendingGia + 1 : 11,
+      status:     C.status >= 0     ? C.status + 1     : 12,
+    };
+
+    console.log('CSV headers detected:', Object.fromEntries(Object.entries(C).map(([k,v])=>[k, v>=0?headers[v]:'NOT FOUND'])));
+
+    const g = (row, col) => col>=0 ? String(row[col]||'') : '';
+
+    return rows.filter(r => g(r, C.id)).map(r => {
+      const coordRaw = g(r, C.coord).replace(/[°NESWnsew]/g,'');
+      const coordParts = coordRaw.split(',').map(s=>parseFloat(s.trim())).filter(n=>!isNaN(n));
+      const lat = coordParts[0] || 10.2988;
+      const lng = coordParts[1] || 105.713;
+      return {
+        id:   g(r, C.id),
+        name: g(r, C.name),
+        cat:  g(r, C.cat) || 'Du lịch',
+        addr: g(r, C.addr),
+        img:  g(r, C.img),
+        desc: g(r, C.desc),
+        phone:      g(r, C.phone),
+        price:      g(r, C.price),
+        pendingSdt: g(r, C.pendingSdt),
+        pendingGia: g(r, C.pendingGia),
+        status:     g(r, C.status) || 'Đã duyệt',
+        lat, lng,
+      };
+    });
+  } catch(e) { console.warn('GSheets fetch error', e); return null; }
+}
+
+// Parse CSV chuẩn RFC 4180 - xử lý đúng dấu phẩy và xuống dòng trong ngoặc kép
+function parseCSV(text) {
+  const rows = [];
+  let cur = '', inQ = false, row = [];
+  for(let i=0; i<text.length; i++) {
+    const ch = text[i];
+    const next = text[i+1];
+    if(inQ) {
+      if(ch==='"' && next==='"') { cur+='"'; i++; }       // "" = dấu ngoặc kép escaped
+      else if(ch==='"') { inQ=false; }                    // Đóng ngoặc kép
+      else { cur+=ch; }
+    } else {
+      if(ch==='"') { inQ=true; }                          // Mở ngoặc kép
+      else if(ch===',') { row.push(cur.trim()); cur=''; } // Tách cột
+      else if(ch==='\n'||(ch==='\r'&&next==='\n')) {    // Xuống dòng
+        if(ch==='\r') i++;
+        row.push(cur.trim());
+        if(row.some(c=>c)) rows.push(row);                // Bỏ hàng trống
+        row=[]; cur='';
+      } else { cur+=ch; }
+    }
+  }
+  if(cur||row.length) { row.push(cur.trim()); if(row.some(c=>c)) rows.push(row); }
+  return rows;
+}
+
+async function postToGSheets(payload) {
+  const scriptUrl = STATE.gsScriptUrl || STATE.gsUrl;
+  if(!scriptUrl) return null;
+  try {
+    // Apps Script không cho phép POST cross-origin → dùng GET với tham số URL
+    const params = encodeURIComponent(JSON.stringify(payload));
+    const url = scriptUrl + '?payload=' + params;
+    const res = await fetch(url, {
+      method: 'GET',
+      redirect: 'follow',
+      mode: 'cors',
+    });
+    const text = await res.text();
+    try { return JSON.parse(text); } catch(e) { return {ok:true}; }
+  } catch(e) { console.warn('postToGSheets error', e); return null; }
+}
+
+async function refreshData() {
+  setGsStatus('loading');
+  showToast('Đang đồng bộ từ Google Sheets...','info');
+  const data = await fetchFromGSheets();
+  if(data && data.length > 0) {
+    STATE.points = data;
+    STATE.gsConnected = true;
+    // Xóa cache localStorage cũ để không lẫn dữ liệu demo
+    localStorage.removeItem('points');
+    setGsStatus('connected');
+    showToast(`Đã tải ${data.length} địa điểm từ Google Sheets`,'success');
+    document.getElementById('last-sync-txt').textContent = 'Đồng bộ lần cuối: '+new Date().toLocaleTimeString('vi-VN');
+  } else {
+    setGsStatus('disconnected');
+    showToast('Không tải được dữ liệu. Kiểm tra Google Sheets đã chia sẻ công khai chưa.','error');
+  }
+  renderAll();
+}
+
+function setGsStatus(s) {
+  const labels = {connected:'Đã kết nối GSheets',disconnected:'Chưa kết nối',loading:'Đang kết nối...'};
+  ['gs-status-pub','gs-status-admin','gs-status-cfg'].forEach(id=>{
+    const el=document.getElementById(id);
+    if(!el)return;
+    el.className='gs-status '+s;
+    el.innerHTML=`<span class="dot-pulse"></span> ${labels[s]}`;
+  });
+}
+
+function saveGsConfig() {
+  const sheetUrl  = ((document.getElementById('gs-url')||{}).value
+                  || (document.getElementById('cfg-gs-url')||{}).value || '').trim();
+  const scriptUrl = ((document.getElementById('gs-script-url')||{}).value
+                  || (document.getElementById('cfg-script-url')||{}).value || '').trim();
+
+  if(!scriptUrl) { showToast('Vui lòng nhập URL Apps Script','error'); return; }
+
+  STATE.gsScriptUrl = scriptUrl;
+  localStorage.setItem('gsScriptUrl', scriptUrl);
+  // gsUrl dùng chung = scriptUrl để tương thích
+  STATE.gsUrl = scriptUrl;
+  localStorage.setItem('gsUrl', scriptUrl);
+
+  closeModal('modal-gs');
+  showToast('Đã lưu cấu hình GSheets ✅','success');
+  refreshData();
+}
+
+async function testConnection() {
+  const sheetUrl  = (document.getElementById('cfg-gs-url')||{}).value||'';
+  const scriptUrl = (document.getElementById('cfg-script-url')||{}).value||'';
+  if(!sheetUrl){showToast('Nhập URL Google Sheets JSON trước','error');return;}
+  STATE.gsUrl = sheetUrl.trim();
+  if(scriptUrl) STATE.gsScriptUrl = scriptUrl.trim();
+  const data = await fetchFromGSheets();
+  if(data) showToast('Kết nối thành công! Tìm thấy '+data.length+' địa điểm','success');
+  else showToast('Không kết nối được. Kiểm tra URL và quyền truy cập','error');
+}
+
+// ══════════════════════════════════════════
+//  SCREENS & NAV
+// ══════════════════════════════════════════
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  if(id==='screen-public') renderPublicMap();
+  if(id==='screen-admin') {
+    renderAll();
+    // Điền sẵn URL đã lưu vào ô cài đặt
+    setTimeout(()=>{
+      const cfgSheet  = document.getElementById('cfg-gs-url');
+      const cfgScript = document.getElementById('cfg-script-url');
+      if(cfgSheet  && STATE.gsUrl)       cfgSheet.value  = STATE.gsUrl;
+      if(cfgScript && STATE.gsScriptUrl) cfgScript.value = STATE.gsScriptUrl;
+    }, 100);
+  }
+  if(id==='screen-field') { refreshData(); autoFdId(); }
+}
+
+function gotoPublic() { showScreen('screen-public'); refreshData(); }
+
+// Khởi tạo hiển thị PIN thực địa
+(function initFieldPin() {
+  const el = document.getElementById('current-field-pin');
+  if(el) el.textContent = STATE.fieldPin || '1234';
+})();
+
+function switchRole(role,btn) {
+  document.querySelectorAll('.role-tab').forEach(t=>t.classList.remove('active'));
+  btn.classList.add('active');
+  ['login-admin-fields','login-owner-fields','login-field-fields'].forEach(id=>{
+    const el=document.getElementById(id);
+    if(el) el.style.display='none';
+  });
+  if(role==='admin') document.getElementById('login-admin-fields').style.display='block';
+  if(role==='owner') document.getElementById('login-owner-fields').style.display='block';
+  if(role==='field') document.getElementById('login-field-fields').style.display='block';
+  document.getElementById('login-admin-fields').style.display = role==='admin'?'block':'none';
+  document.getElementById('login-owner-fields').style.display = role==='owner'?'block':'none';
+  document.getElementById('login-err').textContent='';
+}
+
+function doLogin() {
+  const err=document.getElementById('login-err');
+  const activeTab = document.querySelector('.role-tab.active');
+  const tabText = activeTab ? activeTab.textContent : '';
+  const isAdmin = tabText.includes('Cán bộ');
+  const isField = tabText.includes('Thực địa');
+
+  if(isAdmin) {
+    const pin=document.getElementById('admin-pin').value.trim();
+    const acc=STATE.accounts.find(a=>a.role==='Admin'&&a.pin===pin);
+    if(!acc){err.textContent='Mã PIN không đúng. Vui lòng thử lại.';return;}
+    STATE.currentUser=acc; STATE.currentRole='admin';
+    showScreen('screen-admin'); refreshData();
+  } else if(isField) {
+    const pin=document.getElementById('field-pin').value.trim();
+    const FIELD_PIN = STATE.fieldPin || '1234';
+    if(pin!==FIELD_PIN){err.textContent='Mã PIN thực địa không đúng.';return;}
+    STATE.currentUser={name:'Sinh viên thực địa',role:'Field'};
+    STATE.currentRole='field';
+    document.getElementById('fd-username').textContent='Sinh viên thực địa';
+    showScreen('screen-field');
+    refreshData();
+    autoFdId();
+  } else {
+    const id=document.getElementById('owner-id').value.trim().toUpperCase();
+    const pin=document.getElementById('owner-pin').value.trim();
+    const acc=STATE.accounts.find(a=>a.id===id&&a.pin===pin&&a.role==='User');
+    if(!acc){err.textContent='Mã điểm hoặc mã PIN không đúng.';return;}
+    STATE.currentUser=acc; STATE.currentRole='owner';
+    loadOwnerScreen(acc);
+  }
+}
+
+// ══════════════════════════════════════════
+//  LEAFLET MAPS - Xã Tân Dương, Đồng Tháp
+// ══════════════════════════════════════════
+const MAP_CENTER = [10.2988, 105.713];
+const MAP_ZOOM = 14;
+let pubMap = null, adminMap = null;
+let pubMarkers = {}, adminMarkersMap = {};
+
+function initLeafletMap(divId, isAdmin) {
+  if(isAdmin) {
+    if(adminMap) { adminMap.invalidateSize(); return; }
+    adminMap = L.map(divId, {zoomControl:true}).setView(MAP_CENTER, MAP_ZOOM);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+      maxZoom: 19
+    }).addTo(adminMap);
+  } else {
+    if(pubMap) { pubMap.invalidateSize(); return; }
+    pubMap = L.map(divId, {zoomControl:false}).setView(MAP_CENTER, MAP_ZOOM);
+    L.control.zoom({position:'bottomright'}).addTo(pubMap);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+      maxZoom: 19
+    }).addTo(pubMap);
+  }
+}
+
+function makeIcon(cat, selected) {
+  const c = CAT_COLORS[cat]||CAT_COLORS['Du lịch'];
+  const r = selected ? 10 : 7;
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${r*2+12}" height="${r*2+12}" viewBox="0 0 ${r*2+12} ${r*2+12}">
+    <circle cx="${r+6}" cy="${r+6}" r="${r+5}" fill="${c.dot}" fill-opacity="0.18"/>
+    <circle cx="${r+6}" cy="${r+6}" r="${r}" fill="${c.dot}" stroke="white" stroke-width="2.5"/>
+    ${selected ? `<circle cx="${r+6}" cy="${r+6}" r="${r+7}" fill="none" stroke="${c.dot}" stroke-width="2" stroke-opacity="0.4"/>` : ''}
+  </svg>`;
+  return L.divIcon({
+    html: svg, className:'',
+    iconSize: [r*2+12, r*2+12],
+    iconAnchor: [r+6, r+6],
+    popupAnchor: [0, -(r+6)]
+  });
+}
+
+function normalizeImgUrl(url) {
+  if(!url) return '';
+  // Trích ID từ mọi dạng link Drive
+  let fileId = '';
+  // Dạng: /file/d/ID/view
+  const m1 = url.match(/drive\.google\.com\/file\/d\/([a-zA-Z0-9_-]+)/);
+  if(m1) fileId = m1[1];
+  // Dạng: ?id=ID hoặc &id=ID (uc?export=view&id=...)
+  if(!fileId) {
+    const m2 = url.match(/[?&]id=([a-zA-Z0-9_-]+)/);
+    if(m2 && url.includes('drive.google.com')) fileId = m2[1];
+  }
+  // Nếu tìm được ID → dùng dạng thumbnail (không bị chặn CORS)
+  if(fileId) return 'https://lh3.googleusercontent.com/d/' + fileId;
+  return url;
+}
+
+function makePopupHtml(p) {
+  const c = CAT_COLORS[p.cat]||CAT_COLORS['Du lịch'];
+  const imgUrl = normalizeImgUrl(p.img);
+  return `<div style="min-width:210px;max-width:250px;font-family:'Be Vietnam Pro',sans-serif">
+    ${imgUrl ? `<img src="${imgUrl}" style="width:100%;height:130px;object-fit:cover;border-radius:8px;margin-bottom:10px;display:block" onerror="this.style.display='none'"/>` : ''}
+    <span class="lf-popup-cat" style="background:${c.light};color:${c.text}">${p.cat}</span>
+    <div class="lf-popup-name">${p.name}</div>
+    <div class="lf-popup-row"><i class="fa-solid fa-location-dot" style="color:#e8870a;margin-top:2px"></i><span>${p.addr}</span></div>
+    ${p.phone?`<div class="lf-popup-row"><i class="fa-solid fa-phone" style="color:#1a5c38;margin-top:2px"></i><span>${p.phone}</span></div>`:''}
+    ${p.price?`<div class="lf-popup-row"><i class="fa-solid fa-tag" style="color:#1565c0;margin-top:2px"></i><span>${p.price}</span></div>`:''}
+    ${p.desc?`<div class="lf-popup-desc">${p.desc}</div>`:''}
+  </div>`;
+}
+
+// ── Public Map ──
+let pubCurrentFilter='all';
+function setPubFilter(el) {
+  document.querySelectorAll('.filter-pills .pill').forEach(p=>p.classList.remove('active'));
+  el.classList.add('active');
+  pubCurrentFilter=el.dataset.f;
+  filterPublic();
+}
+function filterPublic() {
+  const q=document.getElementById('pub-search').value.toLowerCase();
+  const visible=STATE.points.filter(p=>{
+    if(p.status!=='Đã duyệt') return false;
+    if(pubCurrentFilter!=='all'&&p.cat!==pubCurrentFilter) return false;
+    if(q&&!p.name.toLowerCase().includes(q)&&!p.addr.toLowerCase().includes(q)) return false;
+    return true;
+  });
+  document.getElementById('pub-count').textContent=visible.length+' địa điểm';
+  renderPointList(visible);
+  renderPubMapMarkers(visible);
+}
+function renderPublicMap() {
+  setTimeout(()=>{
+    initLeafletMap('leaflet-map', false);
+    filterPublic();
+  }, 80);
+}
+function renderPointList(points) {
+  const el=document.getElementById('point-list');
+  if(!points.length){
+    const msg = STATE.points.length === 0
+      ? '<div class="empty-state"><i class="fa-solid fa-rotate fa-spin"></i>Đang tải dữ liệu...<div style="font-size:11px;margin-top:6px;color:var(--text3)">Vui lòng chờ hoặc nhấn Đồng bộ</div></div>'
+      : '<div class="empty-state"><i class="fa-solid fa-magnifying-glass"></i>Không tìm thấy địa điểm</div>';
+    el.innerHTML=msg; return;
+  }
+  el.innerHTML=points.map(p=>{
+    const c=CAT_COLORS[p.cat]||CAT_COLORS['Du lịch'];
+    const sel=STATE.selectedPoint===p.id?'sel':'';
+    return `<div class="point-item ${sel}" id="li-${p.id}" onclick="selectPoint('${p.id}')">
+      <div class="pt-dot" style="background:${c.dot}"></div>
+      <div class="pt-info">
+        <div style="display:flex;align-items:flex-start;gap:6px;justify-content:space-between">
+          <div class="pt-name" style="flex:1">${p.name}</div>
+          <span class="pt-cat" style="background:${c.light};color:${c.text};flex-shrink:0">${p.cat}</span>
+        </div>
+        <div class="pt-addr">${p.addr}</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+function renderPubMapMarkers(points) {
+  if(!pubMap) return;
+  Object.values(pubMarkers).forEach(m=>pubMap.removeLayer(m));
+  pubMarkers = {};
+  points.forEach(p=>{
+    if(!p.lat||!p.lng) return;
+    const sel = STATE.selectedPoint===p.id;
+    const m = L.marker([p.lat, p.lng], {icon: makeIcon(p.cat, sel)}).addTo(pubMap);
+    m.bindPopup(makePopupHtml(p), {maxWidth:260, closeButton:true});
+    m.on('click', ()=>selectPoint(p.id));
+    pubMarkers[p.id] = m;
+  });
+}
+function selectPoint(id) {
+  STATE.selectedPoint=id;
+  const p=STATE.points.find(x=>x.id===id);
+  if(!p)return;
+  filterPublic();
+  document.getElementById('li-'+id)?.scrollIntoView({block:'nearest',behavior:'smooth'});
+  if(pubMap && pubMarkers[id]) {
+    pubMap.setView([p.lat, p.lng], Math.max(pubMap.getZoom(), 15), {animate:true});
+    setTimeout(()=>pubMarkers[id]&&pubMarkers[id].openPopup(), 300);
+  }
+}
+function closePopup(){ STATE.selectedPoint=null; filterPublic(); }
+
+// ── Admin Map ──
+function renderAdminMap() {
+  setTimeout(()=>{
+    initLeafletMap('leaflet-admin-map', true);
+    if(!adminMap) return;
+    Object.values(adminMarkersMap).forEach(m=>adminMap.removeLayer(m));
+    adminMarkersMap = {};
+    STATE.points.filter(p=>p.status==='Đã duyệt'&&p.lat&&p.lng).forEach(p=>{
+      const m = L.marker([p.lat, p.lng], {icon: makeIcon(p.cat, false)}).addTo(adminMap);
+      m.bindPopup(`<div style="font-family:'Be Vietnam Pro',sans-serif">
+        <strong style="font-size:13px">${p.name}</strong>
+        <div style="font-size:12px;color:#5a7060;margin-top:4px">${p.id} · ${p.cat}</div>
+        <button onclick="openEditPoint('${p.id}')" style="margin-top:8px;padding:5px 10px;background:#1a5c38;color:#fff;border:none;border-radius:6px;font-size:12px;cursor:pointer;font-family:inherit">
+          <i class='fa-solid fa-pen'></i> Chỉnh sửa
+        </button></div>`, {maxWidth:220});
+      adminMarkersMap[p.id] = m;
+    });
+  }, 80);
+}
+
+// ══════════════════════════════════════════
+//  ADMIN RENDER
+// ══════════════════════════════════════════
+function renderAll() {
+  renderStats(); renderCatBreakdown(); renderAdminPoints(); renderAdminAccounts(); renderReview(); renderAdminMap();
+  // Cập nhật bản đồ công khai nếu đang hiển thị
+  const pubScreen = document.getElementById('screen-public');
+  if(pubScreen && pubScreen.classList.contains('active')) {
+    filterPublic();
+    if(isMobile()) renderMobList();
+  }
+}
+function renderStats() {
+  document.getElementById('s-total').textContent=STATE.points.length;
+  const pending=STATE.points.filter(p=>p.pendingSdt||p.pendingGia);
+  document.getElementById('s-pending').textContent=pending.length;
+  document.getElementById('review-badge').textContent=pending.length;
+  document.getElementById('s-accounts').textContent=STATE.accounts.filter(a=>a.role==='User').length;
+  document.getElementById('s-ocop').textContent=STATE.points.filter(p=>p.cat==='Sản phẩm OCOP').length;
+}
+function renderCatBreakdown() {
+  const counts={};
+  STATE.points.forEach(p=>counts[p.cat]=(counts[p.cat]||0)+1);
+  const total=STATE.points.length||1;
+  document.getElementById('cat-breakdown').innerHTML=Object.entries(counts).map(([cat,n])=>{
+    const c=CAT_COLORS[cat]||CAT_COLORS['Du lịch'];
+    return `<tr><td><span class="tag" style="background:${c.light};color:${c.text}">${cat}</span></td>
+    <td><strong>${n}</strong></td>
+    <td><div style="display:flex;align-items:center;gap:8px"><div style="flex:1;height:8px;background:var(--border);border-radius:4px"><div style="width:${Math.round(n/total*100)}%;height:100%;background:${c.dot};border-radius:4px"></div></div>${Math.round(n/total*100)}%</div></td>
+    <td><span class="tag tag-approved">Hiển thị</span></td></tr>`;
+  }).join('');
+}
+function renderAdminPoints() {
+  const tb=document.getElementById('points-tbody');
+  if(!STATE.points.length){tb.innerHTML='<tr><td colspan="7" style="text-align:center;padding:24px;color:var(--text3)">Chưa có dữ liệu</td></tr>';return;}
+  tb.innerHTML=STATE.points.slice(0,50).map((p,i)=>{
+    const c=CAT_COLORS[p.cat]||CAT_COLORS['Du lịch'];
+    const hasPending=p.pendingSdt||p.pendingGia;
+    return `<tr>
+      <td><code style="font-size:12px">${p.id}</code></td>
+      <td><strong>${p.name}</strong></td>
+      <td><span class="tag" style="background:${c.light};color:${c.text}">${p.cat}</span></td>
+      <td>${p.addr}</td><td>${p.phone||'—'}</td>
+      <td>${hasPending?'<span class="tag tag-pending">Chờ duyệt</span>':'<span class="tag tag-approved">Đã duyệt</span>'}</td>
+      <td style="white-space:nowrap">
+        <button class="btn btn-ghost btn-sm" onclick="openEditPoint('${p.id}')"><i class="fa-solid fa-pen"></i></button>
+        <button class="btn btn-danger btn-sm" onclick="deletePoint('${p.id}')"><i class="fa-solid fa-trash"></i></button>
+      </td></tr>`;
+  }).join('');
+}
+function renderAdminAccounts() {
+  const tb=document.getElementById('accounts-tbody');
+  tb.innerHTML=STATE.accounts.map(a=>`<tr>
+    <td><code>${a.id}</code></td><td>${a.name}</td>
+    <td><span class="pin-cell">${a.pin}</span></td>
+    <td><span class="tag ${a.role==='Admin'?'tag-dtls':'tag-approved'}">${a.role}</span></td>
+    <td><button class="btn btn-danger btn-sm" onclick="deleteAccount('${a.id}','${a.pin}')"><i class="fa-solid fa-trash"></i></button></td>
+  </tr>`).join('');
+}
+function renderReview() {
+  const pending=STATE.points.filter(p=>p.pendingSdt||p.pendingGia);
+  const el=document.getElementById('review-list');
+  if(!pending.length){el.innerHTML='<div class="empty-state"><i class="fa-solid fa-circle-check"></i>Không có yêu cầu chờ duyệt</div>';return;}
+  el.innerHTML=pending.map(p=>`
+    <div class="review-card">
+      <div class="rc-info">
+        <h4>${p.name} <code style="font-size:12px;font-weight:400">(${p.id})</code></h4>
+        <div style="font-size:12px;color:var(--text2)">${p.addr}</div>
+        <div class="rc-diff">
+          ${p.pendingSdt?`<div class="rc-old"><strong>SĐT cũ</strong>${p.phone||'—'}</div><div class="rc-new"><strong>SĐT mới</strong>${p.pendingSdt}</div>`:''}
+          ${p.pendingGia?`<div class="rc-old"><strong>Giá cũ</strong>${p.price||'—'}</div><div class="rc-new"><strong>Giá mới</strong>${p.pendingGia}</div>`:''}
+        </div>
+      </div>
+      <div class="review-actions">
+        <button class="btn btn-success btn-sm" onclick="approvePoint('${p.id}')"><i class="fa-solid fa-check"></i> Duyệt</button>
+        <button class="btn btn-danger btn-sm" onclick="rejectPoint('${p.id}')"><i class="fa-solid fa-xmark"></i> Từ chối</button>
+      </div>
+    </div>`).join('');
+}
+
+function switchAdminPanel(el) {
+  document.querySelectorAll('.admin-nav .nav-item').forEach(n=>n.classList.remove('active'));
+  el.classList.add('active');
+  document.querySelectorAll('.admin-panel').forEach(p=>p.classList.remove('active'));
+  document.getElementById(el.dataset.panel).classList.add('active');
+  if(el.dataset.panel==='admin-map') renderAdminMap();
+}
+
+// ══════════════════════════════════════════
+//  ADMIN: POINT CRUD
+// ══════════════════════════════════════════
+function openAddPoint() {
+  STATE.editingPointIdx=null;
+  document.getElementById('modal-point-title').textContent='Thêm địa điểm mới';
+  ['fp-id','fp-name','fp-addr','fp-phone','fp-price','fp-desc','fp-img'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('fp-lat').value='10.2988';
+  document.getElementById('fp-lng').value='105.713';
+  const nextId='DD'+String(STATE.points.length+1).padStart(3,'0');
+  document.getElementById('fp-id').value=nextId;
+  openModal('modal-point');
+}
+function openEditPoint(id) {
+  const p=STATE.points.find(x=>x.id===id);
+  if(!p)return;
+  STATE.editingPointIdx=STATE.points.indexOf(p);
+  document.getElementById('modal-point-title').textContent='Chỉnh sửa địa điểm';
+  document.getElementById('fp-id').value=p.id;
+  document.getElementById('fp-cat').value=p.cat;
+  document.getElementById('fp-name').value=p.name;
+  document.getElementById('fp-addr').value=p.addr;
+  document.getElementById('fp-lat').value=p.lat||10.2988;
+  document.getElementById('fp-lng').value=p.lng||105.713;
+  document.getElementById('fp-phone').value=p.phone||'';
+  document.getElementById('fp-price').value=p.price||'';
+  document.getElementById('fp-desc').value=p.desc||'';
+  document.getElementById('fp-img').value=p.img||'';
+  openModal('modal-point');
+}
+async function savePoint() {
+  const lat = parseFloat(document.getElementById('fp-lat').value);
+  const lng = parseFloat(document.getElementById('fp-lng').value);
+  if(!lat||!lng){showToast('Vui lòng nhập tọa độ hợp lệ (Vĩ độ, Kinh độ)','error');return;}
+  const pt={
+    id:document.getElementById('fp-id').value.trim(),
+    cat:document.getElementById('fp-cat').value,
+    name:document.getElementById('fp-name').value.trim(),
+    addr:document.getElementById('fp-addr').value.trim(),
+    lat, lng,
+    phone:document.getElementById('fp-phone').value.trim(),
+    price:document.getElementById('fp-price').value.trim(),
+    desc:document.getElementById('fp-desc').value.trim(),
+    img:document.getElementById('fp-img').value.trim(),
+    status:'Đã duyệt', pendingSdt:'', pendingGia:'',
+  };
+  if(!pt.id||!pt.name){showToast('Vui lòng nhập Mã điểm và Tên điểm','error');return;}
+  if(STATE.editingPointIdx!==null) STATE.points[STATE.editingPointIdx]={...STATE.points[STATE.editingPointIdx],...pt};
+  else STATE.points.push(pt);
+  saveLocal();
+  const coordStr = `${pt.lat}, ${pt.lng}`;
+  if(STATE.gsUrl) await postToGSheets({action:'append',row:[pt.id,pt.name,pt.cat,pt.addr,coordStr,pt.img||'',pt.desc,pt.phone,pt.price,'','','Đã duyệt'],sheet:'DIEM_DEN'});
+  closeModal('modal-point'); renderAll(); showToast('Đã lưu địa điểm thành công','success');
+}
+async function deletePoint(id) {
+  const p = STATE.points.find(x=>x.id===id);
+  if(!p) return;
+  if(!confirm('Xóa địa điểm "' + p.name + '"?\n\nHành động này sẽ xóa khỏi Google Sheets và không thể hoàn tác.')) return;
+
+  // Xóa trên Sheets trước (dùng Apps Script)
+  if(STATE.gsScriptUrl) {
+    showToast('Đang xóa trên Google Sheets...','info');
+    try {
+      const row = findRowById(id);
+      const params = encodeURIComponent(JSON.stringify({
+        action: 'deleteRow',
+        sheet: 'DIEM_DEN',
+        row: row
+      }));
+      await fetch(STATE.gsScriptUrl + '?payload=' + params, {method:'GET', redirect:'follow', mode:'cors'});
+    } catch(e) {
+      console.warn('Xóa trên Sheets thất bại:', e);
+      showToast('⚠️ Không xóa được trên Sheets. Hãy xóa thủ công trên Google Sheets.','error');
+    }
+  }
+
+  // Xóa trong app
+  STATE.points = STATE.points.filter(p=>p.id!==id);
+  saveLocal();
+  renderAll();
+  showToast('Đã xóa địa điểm "' + p.name + '"','success');
+}
+
+// ══════════════════════════════════════════
+//  ADMIN: REVIEW
+// ══════════════════════════════════════════
+async function approvePoint(id) {
+  const p=STATE.points.find(x=>x.id===id);
+  if(!p)return;
+  if(p.pendingSdt) p.phone=p.pendingSdt;
+  if(p.pendingGia) p.price=p.pendingGia;
+  p.pendingSdt=''; p.pendingGia=''; p.status='Đã duyệt';
+  saveLocal();
+  if(STATE.gsUrl) {
+    const colMap = STATE.gsColMap || {status:12};
+    await postToGSheets({action:'update',sheet:'DIEM_DEN',row:findRowById(id),col:colMap.status,value:'Đã duyệt'});
+  }
+  renderAll(); showToast('Đã phê duyệt thay đổi cho '+p.name,'success');
+}
+function rejectPoint(id) {
+  const p=STATE.points.find(x=>x.id===id);
+  if(!p)return;
+  p.pendingSdt=''; p.pendingGia=''; p.status='Đã duyệt';
+  saveLocal(); renderAll(); showToast('Đã từ chối yêu cầu của '+p.name,'info');
+}
+function findRowById(id) {
+  // headerRowIdx = vị trí hàng header (0-based), +2 để bù header+1 thành số hàng GSheets (1-based)
+  const headerOffset = (STATE.gsHeaderRowIdx || 0) + 2;
+  return STATE.points.findIndex(p=>p.id===id) + headerOffset;
+}
+
+// ══════════════════════════════════════════
+//  ADMIN: ACCOUNTS
+// ══════════════════════════════════════════
+function openAddAccount() {
+  const sel=document.getElementById('fa-id');
+  sel.innerHTML=STATE.points.map(p=>`<option value="${p.id}">${p.id} — ${p.name}</option>`).join('');
+  document.getElementById('fa-name').value='';
+  document.getElementById('fa-pin').value='PIN'+Math.floor(1000+Math.random()*9000);
+  openModal('modal-account');
+}
+function saveAccount() {
+  const acc={
+    id:document.getElementById('fa-id').value,
+    name:document.getElementById('fa-name').value.trim(),
+    pin:document.getElementById('fa-pin').value,
+    role:document.getElementById('fa-role').value,
+  };
+  if(!acc.name){showToast('Nhập tên đại diện','error');return;}
+  STATE.accounts.push(acc); saveLocal();
+  closeModal('modal-account'); renderAdminAccounts(); showToast('Đã cấp tài khoản cho '+acc.name,'success');
+}
+function deleteAccount(id,pin) {
+  STATE.accounts=STATE.accounts.filter(a=>!(a.id===id&&a.pin===pin));
+  saveLocal(); renderAdminAccounts(); showToast('Đã xóa tài khoản','success');
+}
+
+// ══════════════════════════════════════════
+//  OWNER SCREEN
+// ══════════════════════════════════════════
+function switchOwnerPanel(el) {
+  document.querySelectorAll('.owner-nav .nav-item').forEach(n=>n.classList.remove('active'));
+  el.classList.add('active');
+  document.querySelectorAll('.owner-panel').forEach(p=>p.classList.remove('active'));
+  document.getElementById(el.dataset.panel).classList.add('active');
+  if(el.dataset.panel==='owner-status') renderOwnerHistory();
+}
+function loadOwnerScreen(acc) {
+  const p=STATE.points.find(x=>x.id===acc.id);
+  document.getElementById('owner-brand-name').textContent='/ '+acc.name;
+  document.getElementById('owner-page-title').textContent=(p?p.name:'Cơ sở của bạn');
+  showScreen('screen-owner');
+  if(p) {
+    document.getElementById('ow-id').value=p.id;
+    document.getElementById('ow-cat').value=p.cat;
+    document.getElementById('ow-name').value=p.name;
+    document.getElementById('ow-addr').value=p.addr;
+    document.getElementById('ow-phone-cur').value=p.phone||'—';
+    document.getElementById('ow-phone-new').value=p.pendingSdt||'';
+    const hasPending=p.pendingSdt||p.pendingGia;
+    const banner=document.getElementById('owner-status-banner');
+    const badge=document.getElementById('owner-status-badge');
+    if(hasPending) {
+      banner.style.display='flex'; banner.className='status-banner pending';
+      document.getElementById('owner-status-text').textContent='Yêu cầu cập nhật đang chờ cán bộ xã phê duyệt.';
+      badge.textContent='Chờ duyệt'; badge.style.background='#f9a825';
+    } else {
+      banner.style.display='flex'; banner.className='status-banner approved';
+      document.getElementById('owner-status-text').textContent='Thông tin đã được phê duyệt và hiển thị trên bản đồ công khai.';
+      badge.textContent='Đã duyệt'; badge.style.background='rgba(255,255,255,.2)';
+    }
+    renderOwnerPriceTable(p);
+  }
+}
+function renderOwnerPriceTable(p) {
+  const rows = p.priceItems || [{name:'Giá dịch vụ / sản phẩm chính',current:p.price||'',new:''}];
+  document.getElementById('price-tbody').innerHTML=rows.map((r,i)=>`<tr>
+    <td><input value="${r.name}" oninput="updatePriceRow(${i},'name',this.value)" /></td>
+    <td style="color:var(--text2)">${r.current||'—'}</td>
+    <td><input value="${r.new||''}" oninput="updatePriceRow(${i},'new',this.value)" placeholder="Nhập giá mới..." /></td>
+    <td><input value="${r.unit||'đ/sp'}" oninput="updatePriceRow(${i},'unit',this.value)" style="width:80px" /></td>
+  </tr>`).join('');
+}
+function updatePriceRow(i,field,val) {
+  const p=STATE.points.find(x=>x.id===STATE.currentUser.id);
+  if(!p)return;
+  if(!p.priceItems) p.priceItems=[{name:'Giá chính',current:p.price,new:'',unit:'đ/sp'}];
+  if(!p.priceItems[i]) p.priceItems[i]={name:'',current:'',new:'',unit:'đ/sp'};
+  p.priceItems[i][field]=val;
+}
+function addPriceRow() {
+  const p=STATE.points.find(x=>x.id===STATE.currentUser.id);
+  if(!p)return;
+  if(!p.priceItems) p.priceItems=[{name:'Giá chính',current:p.price,new:'',unit:'đ/sp'}];
+  p.priceItems.push({name:'',current:'',new:'',unit:'đ/sp'});
+  renderOwnerPriceTable(p);
+}
+async function ownerSubmitInfo() {
+  const p=STATE.points.find(x=>x.id===STATE.currentUser.id);
+  if(!p)return;
+  const newPhone=document.getElementById('ow-phone-new').value.trim();
+  const newDesc=document.getElementById('ow-desc-new').value.trim();
+  if(!newPhone&&!newDesc){showToast('Vui lòng nhập thông tin cần cập nhật','error');return;}
+  if(newPhone) p.pendingSdt=newPhone;
+  if(newDesc) p.desc=newDesc;
+  p.status='Chờ duyệt';
+  const hist=JSON.parse(localStorage.getItem('history-'+p.id)||'[]');
+  hist.unshift({time:new Date().toLocaleString('vi-VN'),type:'Cập nhật thông tin',detail:`SĐT: ${newPhone||'—'}`,status:'Chờ duyệt'});
+  localStorage.setItem('history-'+p.id,JSON.stringify(hist));
+  saveLocal();
+  if(STATE.gsUrl) {
+    const row = findRowById(p.id);
+    const colMap = STATE.gsColMap || {pendingSdt:10, status:12};
+    if(newPhone) await postToGSheets({action:'update',sheet:'DIEM_DEN',row,col:colMap.pendingSdt,value:newPhone});
+    await postToGSheets({action:'update',sheet:'DIEM_DEN',row,col:colMap.status,value:'Chờ duyệt'});
+  }
+  showToast('Đã gửi yêu cầu cập nhật. Đang chờ cán bộ xã phê duyệt.','success');
+  loadOwnerScreen(STATE.currentUser);
+}
+function ownerClearInfo() {
+  document.getElementById('ow-phone-new').value='';
+  document.getElementById('ow-desc-new').value='';
+}
+async function ownerSubmitPrice() {
+  const p=STATE.points.find(x=>x.id===STATE.currentUser.id);
+  if(!p)return;
+  const items=p.priceItems||[];
+  const newPrices=items.filter(r=>r.new).map(r=>`${r.name}: ${r.new} ${r.unit}`).join(' | ');
+  if(!newPrices){showToast('Nhập ít nhất một mức giá mới','error');return;}
+  p.pendingGia=newPrices; p.status='Chờ duyệt';
+  const hist=JSON.parse(localStorage.getItem('history-'+p.id)||'[]');
+  hist.unshift({time:new Date().toLocaleString('vi-VN'),type:'Cập nhật giá',detail:newPrices,status:'Chờ duyệt'});
+  localStorage.setItem('history-'+p.id,JSON.stringify(hist));
+  saveLocal();
+  if(STATE.gsUrl) {
+    const row = findRowById(p.id);
+    const colMap = STATE.gsColMap || {pendingGia:11, status:12};
+    await postToGSheets({action:'update',sheet:'DIEM_DEN',row,col:colMap.pendingGia,value:newPrices});
+    await postToGSheets({action:'update',sheet:'DIEM_DEN',row,col:colMap.status,value:'Chờ duyệt'});
+  }
+  showToast('Đã gửi cập nhật giá. Đang chờ phê duyệt.','success');
+  loadOwnerScreen(STATE.currentUser);
+}
+function renderOwnerHistory() {
+  const p=STATE.points.find(x=>x.id===STATE.currentUser?.id);
+  if(!p)return;
+  const hist=JSON.parse(localStorage.getItem('history-'+p.id)||'[]');
+  const el=document.getElementById('owner-history');
+  if(!hist.length){el.innerHTML='<div class="empty-state"><i class="fa-solid fa-clock-rotate-left"></i>Chưa có lịch sử</div>';return;}
+  el.innerHTML=hist.map(h=>`<div class="info-card" style="margin-bottom:10px">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+      <strong style="font-size:14px">${h.type}</strong>
+      <span class="tag ${h.status==='Đã duyệt'?'tag-approved':'tag-pending'}">${h.status}</span>
+    </div>
+    <div style="font-size:13px;color:var(--text2)">${h.detail}</div>
+    <div style="font-size:11px;color:var(--text3);margin-top:6px"><i class="fa-regular fa-clock"></i> ${h.time}</div>
+  </div>`).join('');
+}
+
+// ══════════════════════════════════════════
+//  MODAL & TOAST
+// ══════════════════════════════════════════
+function openModal(id){document.getElementById(id).classList.add('open');}
+function closeModal(id){document.getElementById(id).classList.remove('open');}
+document.querySelectorAll('.modal-overlay').forEach(m=>m.addEventListener('click',e=>{if(e.target===m)m.classList.remove('open');}));
+function showToast(msg,type='info') {
+  const t=document.createElement('div');
+  t.className=`toast ${type}`;
+  const icons={success:'fa-circle-check',error:'fa-circle-exclamation',info:'fa-circle-info'};
+  t.innerHTML=`<i class="fa-solid ${icons[type]||icons.info}"></i>${msg}`;
+  document.getElementById('toasts').appendChild(t);
+  setTimeout(()=>t.remove(),3500);
+}
+
+// ══════════════════════════════════════════
+//  INIT
+// ══════════════════════════════════════════
+if(STATE.gsUrl) {
+  document.getElementById('cfg-gs-url').value=STATE.gsUrl;
+  refreshData();
+}
+
+
+// ══════════════════════════════════════════
+//  FIELD SURVEY - Nhập liệu thực địa
+// ══════════════════════════════════════════
+
+// -- Chuyển tab thực địa --
+function switchFdTab(btn) {
+  document.querySelectorAll('.fd-tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.fd-panel').forEach(p=>p.classList.remove('active'));
+  btn.classList.add('active');
+  const panel = document.getElementById(btn.dataset.tab);
+  if(panel) {
+    panel.classList.add('active');
+    if(btn.dataset.tab==='fd-list') renderFdList();
+  }
+}
+
+// -- Lấy GPS --
+let fdGpsWatch = null;
+function getGPS() {
+  if(!navigator.geolocation) {
+    showToast('Thiết bị không hỗ trợ GPS','error'); return;
+  }
+  const btn = document.getElementById('fd-btn-gps');
+  const coordEl = document.getElementById('fd-gps-coords');
+  const accEl = document.getElementById('fd-gps-acc');
+
+  btn.classList.add('loading');
+  btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Đang định vị...';
+  coordEl.textContent = 'Đang tìm vị trí...';
+  accEl.textContent = 'Vui lòng đứng ngoài trời để GPS chính xác hơn';
+
+  if(fdGpsWatch) navigator.geolocation.clearWatch(fdGpsWatch);
+
+  fdGpsWatch = navigator.geolocation.watchPosition(
+    (pos) => {
+      const lat = pos.coords.latitude.toFixed(6);
+      const lng = pos.coords.longitude.toFixed(6);
+      const acc = Math.round(pos.coords.accuracy);
+
+      document.getElementById('fd-lat').value = lat;
+      document.getElementById('fd-lng').value = lng;
+      coordEl.textContent = lat + ', ' + lng;
+      accEl.textContent = 'Độ chính xác: ±' + acc + 'm' + (acc<=15?' ✅':(acc<=50?' ⚠️':' ❌ Chờ thêm...'));
+
+      if(acc <= 50) {
+        btn.classList.remove('loading');
+        btn.innerHTML = '<i class="fa-solid fa-check"></i> Đã lấy tọa độ';
+        btn.style.background = '#2e7d52';
+        if(acc <= 15) {
+          navigator.geolocation.clearWatch(fdGpsWatch);
+        }
+      }
+    },
+    (err) => {
+      btn.classList.remove('loading');
+      btn.innerHTML = '<i class="fa-solid fa-crosshairs"></i> Lấy vị trí GPS';
+      if(err.code===1) {
+        coordEl.textContent = 'Bị từ chối quyền truy cập GPS';
+        accEl.textContent = 'Vào Cài đặt trình duyệt → Cho phép truy cập vị trí';
+      } else {
+        coordEl.textContent = 'Không lấy được GPS';
+        accEl.textContent = 'Kiểm tra kết nối và thử lại';
+      }
+    },
+    { enableHighAccuracy: true, timeout: 30000, maximumAge: 0 }
+  );
+}
+
+// -- Chọn phân loại --
+function selectFdCat(btn) {
+  document.querySelectorAll('.fd-cat-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+}
+function getFdCat() {
+  const active = document.querySelector('.fd-cat-btn.active');
+  return active ? active.dataset.cat : 'Du lịch';
+}
+
+// -- Tự động tạo mã điểm --
+function autoFdId() {
+  const existing = STATE.points.map(p=>p.id).filter(id=>id.startsWith('DD'));
+  let max = existing.reduce((m,id)=>Math.max(m,parseInt(id.replace('DD',''))||0),0);
+  document.getElementById('fd-id').value = 'DD' + String(max+1).padStart(3,'0');
+}
+
+// -- Nén ảnh trước khi upload --
+function compressImage(base64, maxWidth, quality) {
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      let w = img.width, h = img.height;
+      if(w > maxWidth) { h = Math.round(h * maxWidth / w); w = maxWidth; }
+      canvas.width = w; canvas.height = h;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0, w, h);
+      resolve(canvas.toDataURL('image/jpeg', quality));
+    };
+    img.src = base64;
+  });
+}
+
+// -- Xử lý ảnh chụp + upload --
+const DRIVE_FOLDER_ID = '1RKvrAOkHRdoXDQ9HUh-V4oVD_sdz7-nu';
+let fdPhotoBase64 = '';
+let fdPhotoUploaded = ''; // Link Drive sau khi upload thành công
+
+function handleFdPhoto(input) {
+  const file = input.files[0];
+  if(!file) return;
+  if(file.size > 10*1024*1024) {
+    showToast('Ảnh quá lớn (tối đa 10MB).','error'); return;
+  }
+
+  // Hiện preview tức thì bằng base64
+  const reader = new FileReader();
+  reader.onload = async (e) => {
+    fdPhotoBase64 = e.target.result;
+    fdPhotoUploaded = '';
+    const preview = document.getElementById('fd-photo-preview');
+    preview.src = fdPhotoBase64;
+    preview.style.display = 'block';
+    document.getElementById('fd-photo-area').style.display = 'none';
+
+    // Hiện thanh tiến trình
+    const note = document.getElementById('fd-img-note');
+    note.style.display = 'block';
+    note.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Đang upload ảnh lên Google Drive...';
+
+    // Upload ảnh lên Imgur (miễn phí, không bị CORS, hoạt động tốt trên điện thoại)
+    try {
+      note.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Đang nén và upload ảnh...';
+
+      // Nén ảnh xuống tối đa 1MB trước khi upload
+      const compressed = await compressImage(fdPhotoBase64, 1200, 0.75);
+      const base64Data = compressed.split(',')[1];
+
+      const formData = new FormData();
+      formData.append('image', base64Data);
+      formData.append('type', 'base64');
+
+      const res = await fetch('https://api.imgur.com/3/image', {
+        method: 'POST',
+        headers: { 'Authorization': 'Client-ID 546c25a59c58ad7' },
+        body: formData
+      });
+      const data = await res.json();
+
+      if(data.success && data.data && data.data.link) {
+        fdPhotoUploaded = data.data.link;
+        document.getElementById('fd-img').value = data.data.link;
+        note.innerHTML = '<i class="fa-solid fa-check" style="color:#1a5c38"></i> Upload thành công! Ảnh đã lưu.';
+        showToast('✅ Ảnh đã upload thành công','success');
+      } else {
+        throw new Error(data.data && data.data.error ? data.data.error : 'Upload thất bại');
+      }
+    } catch(err) {
+      fdPhotoUploaded = '';
+      note.innerHTML = '<i class="fa-solid fa-triangle-exclamation" style="color:#e8870a"></i> Upload thất bại. Hãy dán link ảnh thủ công vào ô bên dưới.';
+      console.warn('Upload error:', err);
+    }
+  };
+  reader.readAsDataURL(file);
+}
+
+function previewImgLink(url) {
+  if(!url) return;
+  const preview = document.getElementById('fd-photo-preview');
+  preview.src = url;
+  preview.style.display = 'block';
+  document.getElementById('fd-photo-area').style.display = 'none';
+}
+
+// -- Xóa form --
+function clearFdForm() {
+  ['fd-id','fd-name','fd-addr','fd-phone','fd-desc','fd-img'].forEach(id=>{
+    const el=document.getElementById(id); if(el) el.value='';
+  });
+  ['fd-lat','fd-lng'].forEach(id=>{
+    const el=document.getElementById(id); if(el) el.value='';
+  });
+  document.getElementById('fd-gps-coords').textContent='Chưa lấy tọa độ';
+  document.getElementById('fd-gps-acc').textContent='';
+  const btn=document.getElementById('fd-btn-gps');
+  btn.innerHTML='<i class="fa-solid fa-crosshairs"></i> Lấy vị trí GPS';
+  btn.style.background='';
+  btn.classList.remove('loading');
+  document.getElementById('fd-photo-preview').style.display='none';
+  document.getElementById('fd-photo-area').style.display='flex';
+  document.getElementById('fd-img-note').style.display='none';
+  fdPhotoBase64='';
+  fdPhotoUploaded='';
+  // Reset cat
+  document.querySelectorAll('.fd-cat-btn').forEach((b,i)=>b.classList.toggle('active',i===0));
+  autoFdId();
+  if(fdGpsWatch) { navigator.geolocation.clearWatch(fdGpsWatch); fdGpsWatch=null; }
+}
+
+// -- Gửi điểm lên hệ thống --
+async function submitFdPoint() {
+  const id   = document.getElementById('fd-id').value.trim();
+  const name = document.getElementById('fd-name').value.trim();
+  const lat  = parseFloat(document.getElementById('fd-lat').value);
+  const lng  = parseFloat(document.getElementById('fd-lng').value);
+
+  // Validation
+  if(!id)   { showToast('Vui lòng nhập Mã điểm','error'); document.getElementById('fd-id').focus(); return; }
+  if(!name) { showToast('Vui lòng nhập Tên địa điểm','error'); document.getElementById('fd-name').focus(); return; }
+  if(!lat||!lng) { showToast('Vui lòng lấy tọa độ GPS trước','error'); return; }
+
+  // Kiểm tra trùng mã
+  if(STATE.points.find(p=>p.id===id)) {
+    showToast('Mã điểm ' + id + ' đã tồn tại. Hãy dùng mã khác.','error'); return;
+  }
+
+  const cat   = getFdCat();
+  const addr  = document.getElementById('fd-addr').value.trim() || 'Xã Tân Dương, Đồng Tháp';
+  const phone = document.getElementById('fd-phone').value.trim();
+  const desc  = document.getElementById('fd-desc').value.trim();
+  const img   = document.getElementById('fd-img').value.trim();
+
+  const pt = {
+    id, name, cat, addr, lat, lng,
+    phone, desc, img,
+    status: 'Chờ duyệt',
+    pendingSdt: '', pendingGia: '',
+    price: '',
+    submittedAt: new Date().toLocaleString('vi-VN'),
+    submittedBy: 'Thực địa',
+  };
+
+  const btn = document.querySelector('.fd-btn-submit');
+  btn.disabled = true;
+  btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Đang gửi...';
+
+  try {
+    STATE.points.push(pt);
+    saveLocal();
+
+    if(STATE.gsUrl) {
+      const coordStr = lat + ', ' + lng;
+      let finalImg = img;
+
+      // Nếu có ảnh chụp từ camera → upload lên Imgur (không bị CORS)
+      if(fdPhotoBase64 && !img) {
+        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Đang upload ảnh...';
+        try {
+          const compressed = await compressImage(fdPhotoBase64, 1200, 0.75);
+          const b64 = compressed.split(',')[1];
+          const formData = new FormData();
+          formData.append('image', b64);
+          formData.append('type', 'base64');
+          const res = await fetch('https://api.imgur.com/3/image', {
+            method: 'POST',
+            headers: { 'Authorization': 'Client-ID 546c25a59c58ad7' },
+            body: formData
+          });
+          const d = await res.json();
+          if(d.success && d.data && d.data.link) finalImg = d.data.link;
+        } catch(e) {
+          console.warn('Upload ảnh thất bại, tiếp tục không có ảnh', e);
+        }
+      }
+
+      btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Đang lưu...';
+      await postToGSheets({
+        action: 'append',
+        sheet: 'DIEM_DEN',
+        row: [id, name, cat, addr, coordStr, finalImg, desc, phone, '', '', '', 'Chờ duyệt']
+      });
+      pt.img = finalImg;
+    }
+
+    showToast('✅ Đã gửi "' + name + '" lên hệ thống. Chờ cán bộ duyệt.','success');
+    clearFdForm();
+
+    // Chuyển sang tab danh sách
+    const listTab = document.querySelector('[data-tab="fd-list"]');
+    if(listTab) switchFdTab(listTab);
+
+  } catch(e) {
+    STATE.points.pop();
+    saveLocal();
+    showToast('Lỗi khi gửi dữ liệu. Kiểm tra kết nối mạng.','error');
+    console.error(e);
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> Gửi lên hệ thống';
+  }
+}
+
+// -- Render danh sách điểm đã nhập --
+function renderFdList() {
+  const el = document.getElementById('fd-points-list');
+  // Lọc điểm do thực địa nhập (chờ duyệt hoặc đã duyệt hôm nay)
+  const mine = STATE.points.filter(p=>p.submittedBy==='Thực địa'||p.status==='Chờ duyệt');
+  if(!mine.length) {
+    el.innerHTML='<div style="text-align:center;padding:40px 20px;color:var(--text3)"><i class="fa-solid fa-inbox" style="font-size:32px;margin-bottom:12px;display:block"></i>Chưa có điểm nào được nhập</div>';
+    return;
+  }
+  const C = CAT_COLORS;
+  el.innerHTML = mine.map(p=>{
+    const c=C[p.cat]||C['Du lịch'];
+    const statusColor = p.status==='Đã duyệt'?'#1a5c38':p.status==='Chờ duyệt'?'#e8870a':'#888';
+    const statusBg   = p.status==='Đã duyệt'?'#e8f4ec':p.status==='Chờ duyệt'?'#fff3e0':'#f5f5f5';
+    return `<div class="fd-point-item">
+      <div class="fd-point-dot" style="background:${c.dot}"></div>
+      <div class="fd-point-info">
+        <div class="fd-point-name">${p.name}</div>
+        <div class="fd-point-meta">${p.id} · ${p.cat}</div>
+        <div class="fd-point-meta">${p.addr||''}</div>
+        ${p.submittedAt?'<div class="fd-point-meta" style="color:var(--text3);font-size:10px">'+p.submittedAt+'</div>':''}
+      </div>
+      <div class="fd-point-status" style="color:${statusColor};background:${statusBg}">${p.status}</div>
+    </div>`;
+  }).join('');
+}
+
+// -- Thêm cài đặt PIN thực địa trong admin settings --
+
+// Điền link ảnh hàng loạt từ Drive (admin dùng)
+async function testGSConnection() {
+  showToast('Đang kiểm tra kết nối...','info');
+  try {
+    // Test đọc CSV từ Sheets
+    const data = await fetchFromGSheets();
+    if(data && data.length > 0) {
+      showToast('✅ Kết nối Google Sheets tốt! Tìm thấy ' + data.length + ' địa điểm.','success');
+    } else {
+      showToast('⚠️ Kết nối được nhưng không có dữ liệu. Kiểm tra tên sheet DIEM_DEN và quyền chia sẻ.','error');
+    }
+  } catch(err) {
+    showToast('❌ Không kết nối được: ' + err.message,'error');
+  }
+}
+
+async function bulkFillImagesAdmin() {
+  if(!STATE.gsScriptUrl && !STATE.gsUrl) { showToast('Chưa cài URL Apps Script','error'); return; }
+  if(!confirm('Tự động điền link ảnh từ thư mục Drive vào Google Sheets?\n\nYêu cầu: File ảnh phải đặt tên = Mã điểm (VD: DD001.jpg)')) return;
+  showToast('Đang điền ảnh hàng loạt...','info');
+  try {
+    // Thử gọi trực tiếp để xem phản hồi thật
+    const params = encodeURIComponent(JSON.stringify({ action: 'bulkFillImages', sheet: 'DIEM_DEN' }));
+    const url = STATE.gsUrl + '?payload=' + params;
+    const res = await fetch(url, { method: 'GET', redirect: 'follow' });
+    const text = await res.text();
+    console.log('bulkFill raw response:', text);
+
+    let data;
+    try { data = JSON.parse(text); } catch(e) {
+      // Phản hồi không phải JSON → Apps Script chưa deploy đúng
+      showToast('Apps Script chưa nhận được lệnh. Hãy Deploy lại với "Phiên bản mới".','error');
+      console.error('Non-JSON response:', text.substring(0,200));
+      return;
+    }
+
+    if(data && data.ok) {
+      showToast(data.message || 'Đã điền ảnh thành công ✅','success');
+      await refreshData();
+    } else {
+      const errMsg = (data && data.error) || 'Lỗi không xác định';
+      showToast('Lỗi: ' + errMsg,'error');
+      console.error('bulkFill error:', errMsg);
+      // Gợi ý cụ thể
+      if(errMsg.includes('FOLDER') || errMsg.includes('Drive')) {
+        alert('Chi tiết lỗi:\n' + errMsg + '\n\nKiểm tra:\n1. FOLDER_ID trong script có đúng không?\n2. Thư mục Drive có được chia sẻ không?\n3. Tài khoản deploy có quyền truy cập thư mục không?');
+      }
+    }
+  } catch(err) {
+    showToast('Không kết nối được Apps Script: ' + err.message,'error');
+    console.error('bulkFill fetch error:', err);
+  }
+}
+
+function saveFieldPin() {
+  const pin = document.getElementById('setting-field-pin').value.trim();
+  if(!pin||pin.length<4) { showToast('PIN phải có ít nhất 4 ký tự','error'); return; }
+  STATE.fieldPin = pin;
+  localStorage.setItem('fieldPin', pin);
+  const el = document.getElementById('current-field-pin');
+  if(el) el.textContent = pin;
+  showToast('Đã lưu PIN thực địa: ' + pin,'success');
+}
+
+
+
+// ══════════════════════════════════════════
+//  MOBILE BOTTOM SHEET & RESPONSIVE
+// ══════════════════════════════════════════
+
+const isMobile = () => window.innerWidth <= 768;
+
+// ── Cập nhật danh sách mobile song song với desktop ──
+const _origFilterPublic = filterPublic;
+filterPublic = function() {
+  _origFilterPublic();
+  if(isMobile()) renderMobList();
+};
+
+function renderMobList() {
+  const sheet = document.getElementById('mob-sheet');
+  const listEl = document.getElementById('mob-list');
+  const countEl = document.getElementById('mob-count');
+  if(!sheet || !listEl) return;
+
+  const q = document.getElementById('pub-search').value.toLowerCase();
+  const visible = STATE.points.filter(p => {
+    if(p.status !== 'Đã duyệt') return false;
+    if(pubCurrentFilter !== 'all' && p.cat !== pubCurrentFilter) return false;
+    if(q && !p.name.toLowerCase().includes(q) && !p.addr.toLowerCase().includes(q)) return false;
+    return true;
+  });
+
+  if(countEl) countEl.textContent = visible.length + ' địa điểm';
+
+  if(!visible.length) {
+    listEl.innerHTML = '<div style="text-align:center;padding:32px 20px;color:var(--text3)"><i class="fa-solid fa-magnifying-glass" style="font-size:28px;display:block;margin-bottom:10px"></i>Không tìm thấy địa điểm</div>';
+    return;
+  }
+
+  listEl.innerHTML = visible.map(p => {
+    const c = CAT_COLORS[p.cat] || CAT_COLORS['Du lịch'];
+    const imgUrl = normalizeImgUrl(p.img);
+    return `<div class="point-item" onclick="mobSelectPoint('${p.id}')">
+      ${imgUrl
+        ? `<img src="${imgUrl}" style="width:52px;height:52px;border-radius:10px;object-fit:cover;flex-shrink:0" onerror="this.style.display='none'">`
+        : `<div style="width:52px;height:52px;border-radius:10px;background:${c.light};display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:22px">${p.cat==='Di tích lịch sử'?'🏛️':p.cat==='Làng nghề'?'🧶':p.cat==='Sản phẩm OCOP'?'⭐':'🌿'}</div>`
+      }
+      <div class="pt-info" style="min-width:0;flex:1">
+        <div class="pt-name" style="font-size:14px">${p.name}</div>
+        <div class="pt-addr" style="font-size:12px;margin-top:3px">${p.addr}</div>
+        <span style="font-size:10px;font-weight:600;padding:2px 8px;border-radius:10px;background:${c.light};color:${c.text};display:inline-block;margin-top:4px">${p.cat}</span>
+      </div>
+      <i class="fa-solid fa-chevron-right" style="color:var(--text3);font-size:12px;margin-top:4px;flex-shrink:0"></i>
+    </div>`;
+  }).join('');
+}
+
+// Nhấn item trong bottom sheet
+function mobSelectPoint(id) {
+  const p = STATE.points.find(x => x.id === id);
+  if(!p) return;
+  STATE.selectedPoint = id;
+
+  // Zoom bản đồ đến điểm
+  if(pubMap && pubMarkers[id]) {
+    pubMap.setView([p.lat, p.lng], 16, {animate: true});
+    setTimeout(() => pubMarkers[id] && pubMarkers[id].openPopup(), 350);
+  }
+
+  // Thu bottom sheet xuống peek để thấy bản đồ
+  const sheet = document.getElementById('mob-sheet');
+  if(sheet) {
+    sheet.className = 'peek';
+    document.getElementById('mob-sheet-head') &&
+      (document.getElementById('mob-sheet-head').style.cssText = '');
+  }
+  // Cập nhật highlight list
+  document.querySelectorAll('#mob-list .point-item').forEach(el => el.style.background = '');
+}
+
+// ── Kéo bottom sheet ──
+(function initBottomSheet() {
+  let startY = 0, startState = 'peek', isDragging = false;
+  const STATES = ['peek', 'half', 'full'];
+
+  function attachDrag(el) {
+    if(!el) return;
+    el.addEventListener('touchstart', e => {
+      startY = e.touches[0].clientY;
+      startState = document.getElementById('mob-sheet').className;
+      isDragging = true;
+    }, {passive: true});
+
+    el.addEventListener('touchend', e => {
+      if(!isDragging) return;
+      isDragging = false;
+      const endY = e.changedTouches[0].clientY;
+      const diff = startY - endY; // dương = kéo lên
+      const sheet = document.getElementById('mob-sheet');
+      if(!sheet) return;
+      const cur = STATES.indexOf(startState);
+      if(Math.abs(diff) < 30) return; // quá nhỏ, bỏ qua
+      if(diff > 0 && cur < STATES.length - 1) sheet.className = STATES[cur + 1]; // kéo lên
+      else if(diff < 0 && cur > 0) sheet.className = STATES[cur - 1]; // kéo xuống
+    }, {passive: true});
+  }
+
+  // Gắn drag vào handle và header
+  document.addEventListener('DOMContentLoaded', () => {
+    attachDrag(document.getElementById('mob-handle'));
+    attachDrag(document.querySelector('.mob-sheet-head'));
+  });
+  // Vào thẳng bản đồ công khai khi load trang
+  document.addEventListener('DOMContentLoaded', () => {
+    renderPublicMap();
+    refreshData();
+  });
+  // Nếu DOM đã load
+  setTimeout(() => {
+    attachDrag(document.getElementById('mob-handle'));
+    attachDrag(document.querySelector('.mob-sheet-head'));
+  }, 500);
+})();
+
+// ── Nút định vị GPS trên bản đồ ──
+function mobLocate() {
+  if(!navigator.geolocation || !pubMap) return;
+  const btn = document.getElementById('mob-locate-btn');
+  btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
+  navigator.geolocation.getCurrentPosition(pos => {
+    pubMap.setView([pos.coords.latitude, pos.coords.longitude], 15, {animate: true});
+    L.circle([pos.coords.latitude, pos.coords.longitude], {
+      radius: pos.coords.accuracy/2,
+      color: '#1a5c38', fillColor: '#1a5c38', fillOpacity: 0.15
+    }).addTo(pubMap);
+    L.marker([pos.coords.latitude, pos.coords.longitude], {
+      icon: L.divIcon({
+        html: '<div style="width:14px;height:14px;background:#1a5c38;border:3px solid #fff;border-radius:50%;box-shadow:0 2px 6px rgba(0,0,0,.3)"></div>',
+        className: '', iconSize: [14,14], iconAnchor: [7,7]
+      })
+    }).addTo(pubMap).bindPopup('Vị trí của bạn').openPopup();
+    btn.innerHTML = '<i class="fa-solid fa-location-crosshairs"></i>';
+  }, () => {
+    btn.innerHTML = '<i class="fa-solid fa-location-crosshairs"></i>';
+    showToast('Không lấy được vị trí. Cho phép truy cập GPS.', 'error');
+  }, {enableHighAccuracy: true, timeout: 10000});
+}
+
+// ── Khi render public map xong, init mobile sheet ──
+const _origRenderPublicMap = renderPublicMap;
+renderPublicMap = function() {
+  _origRenderPublicMap();
+  if(isMobile()) {
+    setTimeout(renderMobList, 300);
+  }
+};
+
+</script>
+
+<!-- ══════════════════════════════════════════
+     SCREEN: THỰC ĐỊA (MOBILE)
+══════════════════════════════════════════ -->
+<div class="screen" id="screen-field">
+  <div class="fd-navbar">
+    <div class="fd-brand"><i class="fa-solid fa-person-walking"></i> Nhập liệu thực địa</div>
+    <div class="fd-user" id="fd-username"></div>
+    <button class="fd-logout" onclick="showScreen('screen-login')"><i class="fa-solid fa-right-from-bracket"></i></button>
+  </div>
+
+  <!-- Tab bar -->
+  <div class="fd-tabs">
+    <button class="fd-tab active" data-tab="fd-new" onclick="switchFdTab(this)"><i class="fa-solid fa-plus"></i> Thêm điểm</button>
+    <button class="fd-tab" data-tab="fd-list" onclick="switchFdTab(this)"><i class="fa-solid fa-list"></i> Danh sách</button>
+    <button class="fd-tab" data-tab="fd-guide" onclick="switchFdTab(this)"><i class="fa-solid fa-circle-question"></i> Hướng dẫn</button>
+  </div>
+
+  <div class="fd-body">
+
+    <!-- ── TAB: THÊM ĐIỂM ── -->
+    <div class="fd-panel active" id="fd-new">
+      <div class="fd-card">
+        <div class="fd-section-title"><i class="fa-solid fa-location-dot"></i> Tọa độ GPS</div>
+        <div class="fd-gps-box" id="fd-gps-box">
+          <div class="fd-gps-coords" id="fd-gps-coords">Chưa lấy tọa độ</div>
+          <div class="fd-gps-acc" id="fd-gps-acc"></div>
+          <button class="fd-btn-gps" id="fd-btn-gps" onclick="getGPS()">
+            <i class="fa-solid fa-crosshairs"></i> Lấy vị trí GPS
+          </button>
+        </div>
+        <div class="fd-row">
+          <div class="fd-field">
+            <label>Vĩ độ</label>
+            <input id="fd-lat" type="number" step="0.0001" placeholder="10.2988" inputmode="decimal"/>
+          </div>
+          <div class="fd-field">
+            <label>Kinh độ</label>
+            <input id="fd-lng" type="number" step="0.0001" placeholder="105.713" inputmode="decimal"/>
+          </div>
+        </div>
+      </div>
+
+      <div class="fd-card">
+        <div class="fd-section-title"><i class="fa-solid fa-tag"></i> Thông tin cơ bản</div>
+        <div class="fd-field">
+          <label>Mã điểm <span class="fd-req">*</span></label>
+          <div style="display:flex;gap:8px">
+            <input id="fd-id" placeholder="DD001" style="flex:1"/>
+            <button class="fd-btn-auto" onclick="autoFdId()"><i class="fa-solid fa-wand-magic-sparkles"></i></button>
+          </div>
+        </div>
+        <div class="fd-field">
+          <label>Tên địa điểm <span class="fd-req">*</span></label>
+          <input id="fd-name" placeholder="Ví dụ: Đình làng Tân Lộc"/>
+        </div>
+        <div class="fd-field">
+          <label>Phân loại <span class="fd-req">*</span></label>
+          <div class="fd-cat-grid">
+            <button class="fd-cat-btn active" data-cat="Di tích lịch sử" onclick="selectFdCat(this)">🏛️ Di tích lịch sử</button>
+            <button class="fd-cat-btn" data-cat="Làng nghề" onclick="selectFdCat(this)">🧶 Làng nghề</button>
+            <button class="fd-cat-btn" data-cat="Sản phẩm OCOP" onclick="selectFdCat(this)">⭐ Sản phẩm OCOP</button>
+            <button class="fd-cat-btn" data-cat="Du lịch" onclick="selectFdCat(this)">🌿 Du lịch</button>
+          </div>
+        </div>
+        <div class="fd-field">
+          <label>Địa chỉ (ấp, xã)</label>
+          <input id="fd-addr" placeholder="Ấp Tân Lộc A, Xã Tân Dương"/>
+        </div>
+      </div>
+
+      <div class="fd-card">
+        <div class="fd-section-title"><i class="fa-solid fa-camera"></i> Hình ảnh</div>
+        <div class="fd-photo-area" id="fd-photo-area" onclick="document.getElementById('fd-photo-input').click()">
+          <i class="fa-solid fa-camera" style="font-size:32px;color:var(--text3);margin-bottom:8px"></i>
+          <div style="font-size:13px;color:var(--text2);font-weight:500">Chụp ảnh hoặc chọn từ thư viện</div>
+          <div style="font-size:11px;color:var(--text3);margin-top:4px">Nhấn để chọn ảnh</div>
+        </div>
+        <input type="file" id="fd-photo-input" accept="image/*" capture="environment" style="display:none" onchange="handleFdPhoto(this)"/>
+        <img id="fd-photo-preview" style="display:none;width:100%;border-radius:10px;margin-top:10px;max-height:200px;object-fit:cover"/>
+        <div class="fd-field" style="margin-top:10px">
+          <label>Hoặc dán link ảnh</label>
+          <input id="fd-img" placeholder="https://..." oninput="previewImgLink(this.value)"/>
+        </div>
+        <div id="fd-img-note" class="fd-note" style="display:none"></div>
+      </div>
+
+      <div class="fd-card">
+        <div class="fd-section-title"><i class="fa-solid fa-pen-line"></i> Thông tin thêm</div>
+        <div class="fd-field">
+          <label>Số điện thoại liên hệ</label>
+          <input id="fd-phone" type="tel" placeholder="09xx-xxx-xxx" inputmode="tel"/>
+        </div>
+        <div class="fd-field">
+          <label>Mô tả ngắn</label>
+          <textarea id="fd-desc" rows="3" placeholder="Giới thiệu về địa điểm..."></textarea>
+        </div>
+      </div>
+
+      <div style="padding:0 16px 32px">
+        <button class="fd-btn-submit" onclick="submitFdPoint()">
+          <i class="fa-solid fa-paper-plane"></i> Gửi lên hệ thống
+        </button>
+        <button class="fd-btn-clear" onclick="clearFdForm()">
+          <i class="fa-solid fa-rotate-left"></i> Xóa form
+        </button>
+      </div>
+    </div>
+
+    <!-- ── TAB: DANH SÁCH ── -->
+    <div class="fd-panel" id="fd-list">
+      <div style="padding:16px;display:flex;justify-content:space-between;align-items:center">
+        <div style="font-size:13px;font-weight:600;color:var(--text2)">Điểm đã nhập hôm nay</div>
+        <button class="fd-btn-sm" onclick="refreshData();renderFdList()"><i class="fa-solid fa-rotate"></i> Làm mới</button>
+      </div>
+      <div id="fd-points-list"></div>
+    </div>
+
+    <!-- ── TAB: HƯỚNG DẪN ── -->
+    <div class="fd-panel" id="fd-guide">
+      <div class="fd-card" style="margin:16px">
+        <div class="fd-section-title"><i class="fa-solid fa-list-ol"></i> Quy trình nhập thực địa</div>
+        <div class="fd-guide-step"><span class="fd-step-num">1</span><div><strong>Đến đúng vị trí</strong> cần khảo sát trên thực địa</div></div>
+        <div class="fd-guide-step"><span class="fd-step-num">2</span><div><strong>Nhấn "Lấy vị trí GPS"</strong> — đứng ngoài trời, tránh mái che để GPS chính xác hơn</div></div>
+        <div class="fd-guide-step"><span class="fd-step-num">3</span><div><strong>Chụp ảnh</strong> đại diện cho địa điểm (mặt tiền, biển hiệu...)</div></div>
+        <div class="fd-guide-step"><span class="fd-step-num">4</span><div><strong>Điền thông tin</strong>: tên, phân loại, địa chỉ, SĐT</div></div>
+        <div class="fd-guide-step"><span class="fd-step-num">5</span><div><strong>Nhấn "Gửi lên hệ thống"</strong> — cần có mạng 4G/WiFi</div></div>
+        <div class="fd-guide-step"><span class="fd-step-num">6</span><div>Cán bộ xã sẽ <strong>kiểm duyệt</strong> trước khi hiển thị trên bản đồ</div></div>
+      </div>
+      <div class="fd-card" style="margin:0 16px 16px">
+        <div class="fd-section-title"><i class="fa-solid fa-triangle-exclamation" style="color:#e8870a"></i> Lưu ý quan trọng</div>
+        <div style="font-size:13px;color:var(--text2);line-height:1.8">
+          • GPS cần <strong>1-2 phút</strong> để định vị chính xác<br>
+          • Kiểm tra lại tọa độ trước khi gửi<br>
+          • Ảnh chụp nên đủ sáng, rõ nét<br>
+          • Không trùng mã điểm đã có trong hệ thống<br>
+          • Điểm gửi sẽ ở trạng thái <strong>Chờ duyệt</strong>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+</body>
+</html>
