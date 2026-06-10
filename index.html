@@ -835,7 +835,16 @@ tr:hover td { background: #f9fbf9; }
       3. Sao chép URL Web App và dán vào ô bên dưới
     </div>
     <div class="field-group" style="margin-bottom:14px"><label>URL Web App (Apps Script)</label>
-      <input id="gs-url" placeholder="https://script.google.com/macros/s/.../exec" />
+      <div>
+        <label style="font-size:12px;font-weight:600;color:var(--text2);display:block;margin-bottom:4px">
+          URL Apps Script <span style="color:#e53935">*</span>
+        </label>
+        <input id="gs-script-url" placeholder="https://script.google.com/macros/s/.../exec" style="font-size:12px"/>
+        <div style="font-size:11px;color:var(--text3);margin-top:3px">
+          Vào Google Sheets → Extensions → Apps Script → Deploy → Copy URL
+        </div>
+      </div>
+      <input id="gs-url" type="hidden"/>
     </div>
     <div style="background:var(--bg);border-radius:var(--radius-sm);padding:12px 14px;margin-bottom:14px;font-size:11px;font-family:monospace;color:var(--text2);line-height:1.7;overflow:auto;max-height:200px">
 // Apps Script: dán vào script.google.com<br>
@@ -1072,7 +1081,16 @@ function doPost(e) {<br>
           <div class="config-row">
             <label>URL Apps Script Web App</label>
             <div style="flex:1">
-              <input id="cfg-gs-url" placeholder="https://script.google.com/macros/s/.../exec" />
+              <div>
+                <label style="font-size:12px;font-weight:600;color:var(--text2);display:block;margin-bottom:4px">
+                  URL Apps Script <span style="color:#e53935">*</span>
+                </label>
+                <input id="cfg-script-url" placeholder="https://script.google.com/macros/s/.../exec" style="font-size:12px"/>
+                <div style="font-size:11px;color:var(--text3);margin-top:3px">
+                  Vào Google Sheets → Extensions → Apps Script → Deploy → Copy URL exec
+                </div>
+              </div>
+              <input id="cfg-gs-url" type="hidden"/>
               <div class="config-hint">Triển khai Google Apps Script trong Google Sheets → Extensions → Apps Script → Deploy → Web App</div>
             </div>
           </div>
@@ -1199,6 +1217,7 @@ function doPost(e) {<br>
 // ══════════════════════════════════════════
 const STATE = {
   gsUrl: localStorage.getItem('gsUrl') || '',
+  gsScriptUrl: localStorage.getItem('gsScriptUrl') || '',
   fieldPin: localStorage.getItem('fieldPin') || '1234',
   gsHeaderRowIdx: 0,   // Tự detect khi fetch GSheets
   gsColMap: null,      // Tự detect khi fetch GSheets
@@ -1257,11 +1276,34 @@ function detectCol(headers, keywords) {
 }
 
 async function fetchFromGSheets() {
-  if(!STATE.gsUrl) return null;
+  const scriptUrl = STATE.gsScriptUrl;
+  const sheetUrl  = STATE.gsUrl;
+  if(!scriptUrl && !sheetUrl) return null;
   try {
-    const res = await fetch(STATE.gsUrl);
-    if(!res.ok) throw new Error('HTTP '+res.status);
-    const raw = await res.json();
+    let raw;
+    if(scriptUrl) {
+      // Dùng Apps Script để lấy dữ liệu - không bị lỗi 401
+      const params = encodeURIComponent(JSON.stringify({action:'getData', sheet:'DIEM_DEN'}));
+      const res = await fetch(scriptUrl + '?payload=' + params, {redirect:'follow'});
+      if(!res.ok) throw new Error('HTTP '+res.status);
+      raw = await res.json();
+    } else {
+      // Dùng gviz URL (cần sheet công khai)
+      const res = await fetch(sheetUrl);
+      if(!res.ok) throw new Error('HTTP '+res.status);
+      const text = await res.text();
+      // Parse gviz JSON (có prefix /*O_o*/ hoặc google.visualization...)
+      const jsonStr = text.replace(/^[^[{]*/, '').replace(/\);?\s*$/, '');
+      const gviz = JSON.parse(jsonStr);
+      // Chuyển gviz format sang 2D array
+      if(gviz && gviz.table) {
+        const cols = gviz.table.cols.map(c => c.label);
+        const rows = (gviz.table.rows||[]).map(r => r.c.map(c => c ? (c.v !== null ? c.v : '') : ''));
+        raw = [cols, ...rows];
+      } else {
+        raw = await res.json();
+      }
+    }
     if(!Array.isArray(raw) || raw.length < 2) return null;
 
     // Tìm hàng header thật (hàng đầu tiên có chứa "mã" hoặc "tên")
@@ -1332,11 +1374,12 @@ async function fetchFromGSheets() {
 }
 
 async function postToGSheets(payload) {
-  if(!STATE.gsUrl) return null;
+  const scriptUrl = STATE.gsScriptUrl || STATE.gsUrl;
+  if(!scriptUrl) return null;
   try {
     // Apps Script không cho phép POST cross-origin → dùng GET với tham số URL
     const params = encodeURIComponent(JSON.stringify(payload));
-    const url = STATE.gsUrl + '?payload=' + params;
+    const url = scriptUrl + '?payload=' + params;
     const res = await fetch(url, {
       method: 'GET',
       redirect: 'follow',
@@ -1381,16 +1424,31 @@ function setGsStatus(s) {
 }
 
 function saveGsConfig() {
-  const url = (document.getElementById('gs-url')||{}).value || (document.getElementById('cfg-gs-url')||{}).value || '';
-  if(url) { STATE.gsUrl=url; localStorage.setItem('gsUrl',url); closeModal('modal-gs'); refreshData(); }
-  else showToast('Vui lòng nhập URL Apps Script','error');
+  const sheetUrl  = ((document.getElementById('gs-url')||{}).value
+                  || (document.getElementById('cfg-gs-url')||{}).value || '').trim();
+  const scriptUrl = ((document.getElementById('gs-script-url')||{}).value
+                  || (document.getElementById('cfg-script-url')||{}).value || '').trim();
+
+  if(!scriptUrl) { showToast('Vui lòng nhập URL Apps Script','error'); return; }
+
+  STATE.gsScriptUrl = scriptUrl;
+  localStorage.setItem('gsScriptUrl', scriptUrl);
+  // gsUrl dùng chung = scriptUrl để tương thích
+  STATE.gsUrl = scriptUrl;
+  localStorage.setItem('gsUrl', scriptUrl);
+
+  closeModal('modal-gs');
+  showToast('Đã lưu cấu hình GSheets ✅','success');
+  refreshData();
 }
 
 async function testConnection() {
-  const url=document.getElementById('cfg-gs-url').value;
-  if(!url){showToast('Nhập URL trước','error');return;}
-  STATE.gsUrl=url;
-  const data=await fetchFromGSheets();
+  const sheetUrl  = (document.getElementById('cfg-gs-url')||{}).value||'';
+  const scriptUrl = (document.getElementById('cfg-script-url')||{}).value||'';
+  if(!sheetUrl){showToast('Nhập URL Google Sheets JSON trước','error');return;}
+  STATE.gsUrl = sheetUrl.trim();
+  if(scriptUrl) STATE.gsScriptUrl = scriptUrl.trim();
+  const data = await fetchFromGSheets();
   if(data) showToast('Kết nối thành công! Tìm thấy '+data.length+' địa điểm','success');
   else showToast('Không kết nối được. Kiểm tra URL và quyền truy cập','error');
 }
@@ -1402,7 +1460,16 @@ function showScreen(id) {
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
   document.getElementById(id).classList.add('active');
   if(id==='screen-public') renderPublicMap();
-  if(id==='screen-admin') renderAll();
+  if(id==='screen-admin') {
+    renderAll();
+    // Điền sẵn URL đã lưu vào ô cài đặt
+    setTimeout(()=>{
+      const cfgSheet  = document.getElementById('cfg-gs-url');
+      const cfgScript = document.getElementById('cfg-script-url');
+      if(cfgSheet  && STATE.gsUrl)       cfgSheet.value  = STATE.gsUrl;
+      if(cfgScript && STATE.gsScriptUrl) cfgScript.value = STATE.gsScriptUrl;
+    }, 100);
+  }
   if(id==='screen-field') { refreshData(); autoFdId(); }
 }
 
@@ -2284,10 +2351,11 @@ function renderFdList() {
 
 // Điền link ảnh hàng loạt từ Drive (admin dùng)
 async function testGSConnection() {
-  if(!STATE.gsUrl) { showToast('Chưa cài URL Apps Script','error'); return; }
+  const scriptUrl = STATE.gsScriptUrl || STATE.gsUrl;
+  if(!scriptUrl) { showToast('Chưa cài URL Apps Script','error'); return; }
   showToast('Đang kiểm tra kết nối...','info');
   try {
-    const res  = await fetch(STATE.gsUrl, { method:'GET', redirect:'follow' });
+    const res  = await fetch(scriptUrl, { method:'GET', redirect:'follow' });
     const text = await res.text();
     console.log('Test response:', text);
     try {
@@ -2306,7 +2374,7 @@ async function testGSConnection() {
 }
 
 async function bulkFillImagesAdmin() {
-  if(!STATE.gsUrl) { showToast('Chưa cài URL Google Sheets','error'); return; }
+  if(!STATE.gsScriptUrl && !STATE.gsUrl) { showToast('Chưa cài URL Apps Script','error'); return; }
   if(!confirm('Tự động điền link ảnh từ thư mục Drive vào Google Sheets?\n\nYêu cầu: File ảnh phải đặt tên = Mã điểm (VD: DD001.jpg)')) return;
   showToast('Đang điền ảnh hàng loạt...','info');
   try {
@@ -2654,3 +2722,4 @@ renderPublicMap = function() {
 
 </body>
 </html>
+
