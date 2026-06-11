@@ -8,7 +8,9 @@
 <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@300;400;500;600;700&family=Playfair+Display:wght@600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<link rel="stylesheet" href="https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.css"/>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.min.js"></script>
 <style>
 :root {
   --primary: #1a5c38;
@@ -760,6 +762,120 @@ tr:hover td { background: #f9fbf9; }
   #mob-locate-btn { display: none !important; }
 }
 
+
+/* ══════════════════════════════════════════
+   NAVIGATION / CHỈ ĐƯỜNG
+══════════════════════════════════════════ */
+#nav-panel {
+  position: fixed;
+  bottom: 0; left: 0; right: 0;
+  background: #fff;
+  border-radius: 16px 16px 0 0;
+  box-shadow: 0 -4px 24px rgba(0,0,0,.15);
+  z-index: 2000;
+  transform: translateY(100%);
+  transition: transform .35s cubic-bezier(.32,.72,0,1);
+  max-height: 70vh;
+  display: flex;
+  flex-direction: column;
+}
+#nav-panel.open { transform: translateY(0); }
+.nav-header {
+  display: flex;
+  align-items: center;
+  padding: 14px 16px 10px;
+  border-bottom: 1px solid #f0f4f1;
+  gap: 10px;
+  flex-shrink: 0;
+}
+.nav-title { font-size: 14px; font-weight: 700; color: var(--text1); flex: 1; }
+.nav-close {
+  background: #f0f4f1; border: none; border-radius: 50%;
+  width: 30px; height: 30px; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 13px; color: var(--text2);
+}
+.nav-dest {
+  padding: 10px 16px;
+  background: #f0f7f3;
+  display: flex; align-items: center; gap: 8px;
+  font-size: 13px; color: #1a5c38; font-weight: 600;
+  flex-shrink: 0;
+}
+.nav-mode-bar {
+  display: flex; gap: 0;
+  border-bottom: 1px solid #f0f4f1;
+  flex-shrink: 0;
+}
+.nav-mode-btn {
+  flex: 1; padding: 10px 4px;
+  background: none; border: none;
+  font-size: 11px; font-weight: 600;
+  color: var(--text3); cursor: pointer;
+  font-family: inherit;
+  display: flex; flex-direction: column;
+  align-items: center; gap: 3px;
+  border-bottom: 3px solid transparent;
+  transition: all .2s;
+}
+.nav-mode-btn i { font-size: 16px; }
+.nav-mode-btn.active { color: #1a5c38; border-bottom-color: #1a5c38; }
+.nav-info {
+  padding: 12px 16px;
+  display: flex; gap: 16px;
+  flex-shrink: 0;
+}
+.nav-info-item {
+  display: flex; flex-direction: column;
+  align-items: center; flex: 1;
+}
+.nav-info-val { font-size: 20px; font-weight: 800; color: #1a5c38; }
+.nav-info-lbl { font-size: 11px; color: var(--text3); }
+.nav-steps {
+  overflow-y: auto;
+  flex: 1;
+  padding: 0 16px 16px;
+}
+.nav-step {
+  display: flex; gap: 12px; align-items: flex-start;
+  padding: 10px 0;
+  border-bottom: 1px solid #f0f4f1;
+  font-size: 13px; color: var(--text2);
+}
+.nav-step-icon {
+  width: 30px; height: 30px;
+  background: #e8f4ec; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  color: #1a5c38; font-size: 13px; flex-shrink: 0;
+}
+.nav-step-dist { font-size: 11px; color: var(--text3); margin-top: 2px; }
+.nav-start-btn {
+  margin: 0 16px 16px;
+  padding: 14px;
+  background: #1a5c38; color: #fff;
+  border: none; border-radius: 12px;
+  font-size: 15px; font-weight: 700;
+  cursor: pointer; font-family: inherit;
+  display: flex; align-items: center;
+  justify-content: center; gap: 8px;
+  flex-shrink: 0;
+}
+/* Desktop: nav panel bên trái */
+@media (min-width: 769px) {
+  #nav-panel {
+    position: fixed;
+    top: 60px; left: 10px; bottom: auto; right: auto;
+    width: 320px;
+    border-radius: 14px;
+    max-height: calc(100vh - 80px);
+    transform: translateX(-110%);
+    box-shadow: 0 4px 24px rgba(0,0,0,.15);
+  }
+  #nav-panel.open { transform: translateX(0); }
+}
+/* Ẩn panel routing mặc định của Leaflet */
+.leaflet-routing-container { display: none !important; }
+
 </style>
 </head>
 <body>
@@ -965,6 +1081,45 @@ function doPost(e) {<br>
   <button id="mob-locate-btn" onclick="mobLocate()" title="Vị trí của tôi">
     <i class="fa-solid fa-location-crosshairs"></i>
   </button>
+
+  <!-- Panel chỉ đường -->
+  <div id="nav-panel">
+    <div class="nav-header">
+      <i class="fa-solid fa-route" style="color:#1a5c38;font-size:16px"></i>
+      <span class="nav-title">Chỉ đường</span>
+      <div id="nav-dest" style="font-size:12px;color:#1a5c38;font-weight:600;flex:1;text-align:right;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"></div>
+      <button class="nav-close" onclick="closeNavigation()"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <div class="nav-mode-bar">
+      <button class="nav-mode-btn active" data-mode="car" onclick="switchNavMode(this)">
+        <i class="fa-solid fa-car"></i> Ô tô
+      </button>
+      <button class="nav-mode-btn" data-mode="bike" onclick="switchNavMode(this)">
+        <i class="fa-solid fa-motorcycle"></i> Xe máy
+      </button>
+      <button class="nav-mode-btn" data-mode="foot" onclick="switchNavMode(this)">
+        <i class="fa-solid fa-person-walking"></i> Đi bộ
+      </button>
+    </div>
+    <div class="nav-info">
+      <div class="nav-info-item">
+        <div class="nav-info-val" id="nav-distance">—</div>
+        <div class="nav-info-lbl">Khoảng cách</div>
+      </div>
+      <div class="nav-info-item">
+        <div class="nav-info-val" id="nav-time">—</div>
+        <div class="nav-info-lbl">Thời gian</div>
+      </div>
+    </div>
+    <div class="nav-steps" id="nav-steps">
+      <div style="text-align:center;padding:20px;color:var(--text3)">
+        <i class="fa-solid fa-spinner fa-spin"></i> Đang tính đường...
+      </div>
+    </div>
+    <button class="nav-start-btn" onclick="openGoogleMapsNav()">
+      <i class="fa-brands fa-google"></i> Mở Google Maps để dẫn đường
+    </button>
+  </div>
 
 </div>
 
@@ -1593,7 +1748,7 @@ function normalizeImgUrl(url) {
 function makePopupHtml(p) {
   const c = CAT_COLORS[p.cat]||CAT_COLORS['Du lịch'];
   const imgUrl = normalizeImgUrl(p.img);
-  return `<div style="min-width:210px;max-width:250px;font-family:'Be Vietnam Pro',sans-serif">
+  return `<div style="min-width:215px;max-width:260px;font-family:'Be Vietnam Pro',sans-serif">
     ${imgUrl ? `<img src="${imgUrl}" style="width:100%;height:130px;object-fit:cover;border-radius:8px;margin-bottom:10px;display:block" onerror="this.style.display='none'"/>` : ''}
     <span class="lf-popup-cat" style="background:${c.light};color:${c.text}">${p.cat}</span>
     <div class="lf-popup-name">${p.name}</div>
@@ -1601,6 +1756,14 @@ function makePopupHtml(p) {
     ${p.phone?`<div class="lf-popup-row"><i class="fa-solid fa-phone" style="color:#1a5c38;margin-top:2px"></i><span>${p.phone}</span></div>`:''}
     ${p.price?`<div class="lf-popup-row"><i class="fa-solid fa-tag" style="color:#1565c0;margin-top:2px"></i><span>${p.price}</span></div>`:''}
     ${p.desc?`<div class="lf-popup-desc">${p.desc}</div>`:''}
+    <div style="display:flex;gap:8px;margin-top:10px">
+      <button onclick="startNavigation('${p.id}')" style="flex:1;padding:9px 4px;background:#1a5c38;color:#fff;border:none;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit">
+        <i class="fa-solid fa-route"></i> Chỉ đường
+      </button>
+      <button onclick="openGoogleMaps(${p.lat},${p.lng})" style="flex:1;padding:9px 4px;background:#4285f4;color:#fff;border:none;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit">
+        <i class="fa-brands fa-google"></i> Google Maps
+      </button>
+    </div>
   </div>`;
 }
 
@@ -2629,6 +2792,202 @@ renderPublicMap = function() {
     setTimeout(renderMobList, 300);
   }
 };
+
+
+
+// ══════════════════════════════════════════
+//  CHỈ ĐƯỜNG - Navigation
+// ══════════════════════════════════════════
+let navControl = null;
+let navDestPoint = null;
+let navMode = 'car';
+let userLocation = null;
+
+// Profiles OSRM theo mode
+const OSRM_PROFILE = { car: 'driving', bike: 'driving', foot: 'foot' };
+const MODE_SPEED   = { car: 50, bike: 30, foot: 5 }; // km/h ước tính
+
+function startNavigation(pointId) {
+  const p = STATE.points.find(x => x.id === pointId);
+  if(!p) return;
+  navDestPoint = p;
+
+  // Đóng popup
+  if(pubMap) pubMap.closePopup();
+
+  // Hiện panel
+  const panel = document.getElementById('nav-panel');
+  panel.classList.add('open');
+  document.getElementById('nav-dest').textContent = p.name;
+  document.getElementById('nav-steps').innerHTML =
+    '<div style="text-align:center;padding:20px;color:var(--text3)"><i class="fa-solid fa-spinner fa-spin"></i> Đang lấy vị trí của bạn...</div>';
+
+  // Lấy vị trí người dùng
+  if(navigator.geolocation) {
+    navigator.geolocation.getCurrentPosition(
+      pos => {
+        userLocation = [pos.coords.latitude, pos.coords.longitude];
+        drawRoute(userLocation, [p.lat, p.lng]);
+      },
+      err => {
+        // Không lấy được GPS → dùng trung tâm xã làm điểm xuất phát
+        userLocation = [10.2988, 105.713];
+        document.getElementById('nav-steps').innerHTML =
+          '<div style="padding:10px 0;font-size:12px;color:#e8870a"><i class="fa-solid fa-triangle-exclamation"></i> Không lấy được vị trí GPS. Đang tính từ trung tâm xã.</div>';
+        drawRoute(userLocation, [p.lat, p.lng]);
+      },
+      { enableHighAccuracy: true, timeout: 8000 }
+    );
+  } else {
+    userLocation = [10.2988, 105.713];
+    drawRoute(userLocation, [p.lat, p.lng]);
+  }
+}
+
+function drawRoute(from, to) {
+  if(!pubMap) return;
+
+  // Xóa route cũ
+  if(navControl) { pubMap.removeControl(navControl); navControl = null; }
+
+  const profile = OSRM_PROFILE[navMode] || 'driving';
+
+  navControl = L.Routing.control({
+    waypoints: [
+      L.latLng(from[0], from[1]),
+      L.latLng(to[0], to[1])
+    ],
+    router: L.Routing.osrmv1({
+      serviceUrl: 'https://router.project-osrm.org/route/v1',
+      profile: profile,
+    }),
+    lineOptions: {
+      styles: [
+        { color: '#1a5c38', weight: 5, opacity: 0.8 },
+        { color: '#fff', weight: 2, opacity: 0.5, dashArray: '8,8' }
+      ]
+    },
+    createMarker: (i, wp) => {
+      if(i === 0) {
+        return L.marker(wp.latLng, {
+          icon: L.divIcon({
+            html: '<div style="width:14px;height:14px;background:#1a5c38;border:3px solid #fff;border-radius:50%;box-shadow:0 2px 6px rgba(0,0,0,.3)"></div>',
+            className:'', iconSize:[14,14], iconAnchor:[7,7]
+          })
+        }).bindPopup('Vị trí của bạn');
+      }
+      return null; // Marker đích đã có sẵn
+    },
+    show: false,       // Ẩn panel mặc định của Leaflet
+    addWaypoints: false,
+    fitSelectedRoutes: true,
+  }).addTo(pubMap);
+
+  navControl.on('routesfound', e => {
+    const route = e.routes[0];
+    const distKm = (route.summary.totalDistance / 1000).toFixed(1);
+    const speed  = MODE_SPEED[navMode];
+    const mins   = Math.round(route.summary.totalDistance / 1000 / speed * 60);
+    const timeStr = mins < 60
+      ? mins + ' phút'
+      : Math.floor(mins/60) + ' giờ ' + (mins%60) + ' phút';
+
+    document.getElementById('nav-distance').textContent = distKm + ' km';
+    document.getElementById('nav-time').textContent = timeStr;
+
+    // Render từng bước
+    const steps = route.instructions || [];
+    const icons = {
+      'Straight': 'fa-arrow-up',
+      'SlightRight': 'fa-turn-right',
+      'SlightLeft': 'fa-turn-left',
+      'Right': 'fa-turn-right',
+      'Left': 'fa-turn-left',
+      'SharpRight': 'fa-rotate-right',
+      'SharpLeft': 'fa-rotate-left',
+      'Roundabout': 'fa-rotate',
+      'DestinationReached': 'fa-location-dot',
+      'Head': 'fa-arrow-up',
+    };
+
+    const stepsHtml = steps.map(s => {
+      const icon = icons[s.type] || 'fa-arrow-up';
+      const distM = s.distance < 1000
+        ? Math.round(s.distance) + ' m'
+        : (s.distance/1000).toFixed(1) + ' km';
+      return `<div class="nav-step">
+        <div class="nav-step-icon"><i class="fa-solid ${icon}"></i></div>
+        <div>
+          <div>${translateInstruction(s.text)}</div>
+          <div class="nav-step-dist">${distM}</div>
+        </div>
+      </div>`;
+    }).join('');
+
+    document.getElementById('nav-steps').innerHTML = stepsHtml ||
+      '<div style="padding:12px;color:var(--text3);font-size:13px">Không có bước chi tiết</div>';
+  });
+
+  navControl.on('routingerror', e => {
+    document.getElementById('nav-steps').innerHTML =
+      '<div style="padding:12px;color:#e53935;font-size:13px"><i class="fa-solid fa-triangle-exclamation"></i> Không tìm được đường. Hãy thử Google Maps.</div>';
+    document.getElementById('nav-distance').textContent = '—';
+    document.getElementById('nav-time').textContent = '—';
+  });
+}
+
+// Dịch hướng dẫn sang tiếng Việt
+function translateInstruction(text) {
+  if(!text) return '';
+  return text
+    .replace(/Head (north|south|east|west|northeast|northwest|southeast|southwest)/gi, m =>
+      'Đi về ' + ({north:'Bắc',south:'Nam',east:'Đông',west:'Tây',
+        northeast:'Đông Bắc',northwest:'Tây Bắc',southeast:'Đông Nam',southwest:'Tây Nam'}[m.split(' ')[1].toLowerCase()] || m.split(' ')[1]))
+    .replace(/Turn sharp left/gi, 'Rẽ gắt trái')
+    .replace(/Turn sharp right/gi, 'Rẽ gắt phải')
+    .replace(/Turn left/gi, 'Rẽ trái')
+    .replace(/Turn right/gi, 'Rẽ phải')
+    .replace(/Slight left/gi, 'Hơi rẽ trái')
+    .replace(/Slight right/gi, 'Hơi rẽ phải')
+    .replace(/Continue/gi, 'Tiếp tục')
+    .replace(/Roundabout/gi, 'Vòng xuyến')
+    .replace(/You have arrived/gi, '✅ Bạn đã đến nơi')
+    .replace(/Destination reached/gi, '✅ Đã đến đích')
+    .replace(/on (.+)/gi, (_, road) => 'trên ' + road);
+}
+
+// Chuyển mode đi lại
+function switchNavMode(btn) {
+  document.querySelectorAll('.nav-mode-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  navMode = btn.dataset.mode;
+  if(navDestPoint && userLocation) {
+    document.getElementById('nav-steps').innerHTML =
+      '<div style="text-align:center;padding:20px;color:var(--text3)"><i class="fa-solid fa-spinner fa-spin"></i> Đang tính lại...</div>';
+    drawRoute(userLocation, [navDestPoint.lat, navDestPoint.lng]);
+  }
+}
+
+// Đóng panel chỉ đường
+function closeNavigation() {
+  document.getElementById('nav-panel').classList.remove('open');
+  if(navControl) { pubMap.removeControl(navControl); navControl = null; }
+  navDestPoint = null;
+}
+
+// Mở Google Maps để dẫn đường thật
+function openGoogleMaps(lat, lng) {
+  const dest = lat + ',' + lng;
+  const url = userLocation
+    ? `https://www.google.com/maps/dir/${userLocation[0]},${userLocation[1]}/${dest}`
+    : `https://www.google.com/maps/dir//${dest}`;
+  window.open(url, '_blank');
+}
+
+function openGoogleMapsNav() {
+  if(!navDestPoint) return;
+  openGoogleMaps(navDestPoint.lat, navDestPoint.lng);
+}
 
 </script>
 
