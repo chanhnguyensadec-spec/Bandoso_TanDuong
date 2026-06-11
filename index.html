@@ -183,6 +183,12 @@ body { font-family: 'Be Vietnam Pro', sans-serif; background: var(--bg); color: 
    SCREEN: ADMIN
 ══════════════════════════════════════════ */
 #screen-admin { flex-direction: column; }
+#screen-admin > .navbar {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  flex-shrink: 0;
+}
 .admin-layout { display: flex; flex: 1; overflow: hidden; }
 .admin-nav {
   width: 210px; background: #0f3d22; flex-shrink: 0; display: flex; flex-direction: column; padding: 16px 0;
@@ -1148,6 +1154,7 @@ function doPost(e) {<br>
       <button class="btn-nav" onclick="refreshData()"><i class="fa-solid fa-rotate"></i> Đồng bộ</button>
       <button class="btn-nav" style="background:#e8870a;color:#fff;border-color:#e8870a" onclick="bulkFillImagesAdmin()" title="Điền link ảnh hàng loạt từ Drive (đặt tên file = Mã điểm)"><i class="fa-solid fa-images"></i> Điền ảnh loạt</button>
       <button class="btn-nav" style="background:#6a1b9a;color:#fff;border-color:#6a1b9a" onclick="testGSConnection()" title="Kiểm tra kết nối Apps Script"><i class="fa-solid fa-plug"></i> Test kết nối</button>
+      <button class="btn-nav" style="background:#1a5c38;color:#fff;border-color:#1a5c38" onclick="openAddPoint()"><i class="fa-solid fa-plus"></i> Thêm địa điểm</button>
       <button class="btn-nav" onclick="showScreen('screen-login')"><i class="fa-solid fa-right-from-bracket"></i> Đăng xuất</button>
     </div>
   </div>
@@ -1211,7 +1218,7 @@ function doPost(e) {<br>
             <h3>Danh sách địa điểm</h3>
             <div class="ml-auto" style="display:flex;gap:8px">
               <button class="btn btn-ghost btn-sm" onclick="refreshData()"><i class="fa-solid fa-rotate"></i> Làm mới</button>
-              <button class="btn btn-primary btn-sm" onclick="openAddPoint()"><i class="fa-solid fa-plus"></i> Thêm địa điểm</button>
+
             </div>
           </div>
           <table><thead><tr><th>Mã</th><th>Tên địa điểm</th><th>Phân loại</th><th>Địa chỉ</th><th>SĐT</th><th>Trạng thái</th><th>Thao tác</th></tr></thead>
@@ -2014,12 +2021,51 @@ async function savePoint() {
     status:'Đã duyệt', pendingSdt:'', pendingGia:'',
   };
   if(!pt.id||!pt.name){showToast('Vui lòng nhập Mã điểm và Tên điểm','error');return;}
-  if(STATE.editingPointIdx!==null) STATE.points[STATE.editingPointIdx]={...STATE.points[STATE.editingPointIdx],...pt};
-  else STATE.points.push(pt);
-  saveLocal();
+
+  const isEditing = STATE.editingPointIdx !== null;
   const coordStr = `${pt.lat}, ${pt.lng}`;
-  if(STATE.gsUrl) await postToGSheets({action:'append',row:[pt.id,pt.name,pt.cat,pt.addr,coordStr,pt.img||'',pt.desc,pt.phone,pt.price,'','','Đã duyệt'],sheet:'DIEM_DEN'});
-  closeModal('modal-point'); renderAll(); showToast('Đã lưu địa điểm thành công','success');
+
+  if(isEditing) {
+    // ── ĐANG SỬA: cập nhật từng cột, KHÔNG thêm dòng mới ──
+    const existingPt = STATE.points[STATE.editingPointIdx];
+    STATE.points[STATE.editingPointIdx] = {...existingPt, ...pt};
+    saveLocal();
+    if(STATE.gsScriptUrl) {
+      const row = findRowById(pt.id);
+      const colMap = STATE.gsColMap || {};
+      // Cập nhật từng cột quan trọng
+      const updates = [
+        {col:2, val:pt.name},
+        {col:3, val:pt.cat},
+        {col:4, val:pt.addr},
+        {col:5, val:coordStr},
+        {col:6, val:pt.img||''},
+        {col:7, val:pt.desc},
+        {col:colMap.phone||8,  val:pt.phone},
+        {col:colMap.price||9,  val:pt.price},
+        {col:colMap.status||12, val:pt.status},
+      ];
+      for(const u of updates) {
+        await postToGSheets({action:'update', sheet:'DIEM_DEN', row, col:u.col, value:u.val});
+      }
+    }
+    showToast('Đã cập nhật địa điểm thành công','success');
+  } else {
+    // ── THÊM MỚI: append dòng mới ──
+    STATE.points.push(pt);
+    saveLocal();
+    if(STATE.gsScriptUrl) {
+      await postToGSheets({
+        action:'append',
+        row:[pt.id,pt.name,pt.cat,pt.addr,coordStr,pt.img||'',pt.desc,pt.phone,pt.price,'','','Đã duyệt'],
+        sheet:'DIEM_DEN'
+      });
+    }
+    showToast('Đã thêm địa điểm thành công','success');
+  }
+
+  closeModal('modal-point');
+  renderAll();
 }
 async function deletePoint(id) {
   const p = STATE.points.find(x=>x.id===id);
