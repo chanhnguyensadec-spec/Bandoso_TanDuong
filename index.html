@@ -1526,28 +1526,24 @@ async function fetchFromGSheets() {
   } catch(e) { console.warn('GSheets fetch error', e); return null; }
 }
 
-// Tải PIN admin từ sheet TAI_KHOAN
+// Tải PIN admin từ Apps Script (không cần sheet công khai)
 async function fetchAdminPin() {
-  if(!STATE.gsSheetId) return;
+  if(!STATE.gsScriptUrl) return;
   try {
-    const csvUrl = `https://docs.google.com/spreadsheets/d/${STATE.gsSheetId}/export?format=csv&sheet=TAI_KHOAN`;
-    const res = await fetch(csvUrl);
-    if(!res.ok) return; // Sheet chưa tồn tại → bỏ qua
-    const csv = await res.text();
-    const rows = parseCSV(csv);
-    // Tìm hàng có role=Admin
-    for(const row of rows) {
-      const role = String(row[2]||'').trim();
-      const pin  = String(row[1]||'').trim();
-      if(role === 'Admin' && pin) {
-        const adminAcc = STATE.accounts.find(a=>a.role==='Admin');
-        if(adminAcc && adminAcc.pin !== pin) {
-          adminAcc.pin = pin;
-          localStorage.setItem('accounts', JSON.stringify(STATE.accounts));
-          console.log('Admin PIN synced from Sheets');
-        }
-        break;
+    const params = encodeURIComponent(JSON.stringify({action:'getAdminPin'}));
+    const res = await fetch(STATE.gsScriptUrl + '?payload=' + params, {redirect:'follow'});
+    if(!res.ok) return;
+    const text = await res.text();
+    const data = JSON.parse(text);
+    if(data.pin) {
+      const adminAcc = STATE.accounts.find(a=>a.role==='Admin');
+      if(adminAcc) {
+        adminAcc.pin = data.pin;
+      } else {
+        STATE.accounts.push({id:'ADMIN', name:'Cán bộ xã phụ trách', pin:data.pin, role:'Admin'});
       }
+      localStorage.setItem('accounts', JSON.stringify(STATE.accounts));
+      console.log('Admin PIN synced from Sheets:', data.pin);
     }
   } catch(e) { console.warn('fetchAdminPin error', e); }
 }
@@ -1682,6 +1678,9 @@ function gotoPublic() { showScreen('screen-public'); refreshData(); }
   const el = document.getElementById('current-field-pin');
   if(el) el.textContent = STATE.fieldPin || '1234';
 })();
+
+// Tải PIN admin từ Sheets ngay khi load trang
+document.addEventListener('DOMContentLoaded', ()=>{ fetchAdminPin(); });
 
 function switchRole(role,btn) {
   document.querySelectorAll('.role-tab').forEach(t=>t.classList.remove('active'));
