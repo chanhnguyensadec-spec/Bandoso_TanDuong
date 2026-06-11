@@ -1697,7 +1697,7 @@ function switchRole(role,btn) {
   document.getElementById('login-err').textContent='';
 }
 
-function doLogin() {
+async function doLogin() {
   const err=document.getElementById('login-err');
   const activeTab = document.querySelector('.role-tab.active');
   const tabText = activeTab ? activeTab.textContent : '';
@@ -1706,6 +1706,11 @@ function doLogin() {
 
   if(isAdmin) {
     const pin=document.getElementById('admin-pin').value.trim();
+    // Thử tải PIN mới nhất từ Sheets trước khi kiểm tra
+    const loginBtn = document.querySelector('button.btn-login');
+    if(loginBtn) { loginBtn.disabled=true; loginBtn.innerHTML='<i class="fa-solid fa-spinner fa-spin"></i> Đang xác thực...'; }
+    await fetchAdminPin();
+    if(loginBtn) { loginBtn.disabled=false; loginBtn.innerHTML='<i class="fa-solid fa-right-to-bracket"></i> Đăng nhập'; }
     const acc=STATE.accounts.find(a=>a.role==='Admin'&&a.pin===pin);
     if(!acc){err.textContent='Mã PIN không đúng. Vui lòng thử lại.';return;}
     STATE.currentUser=acc; STATE.currentRole='admin';
