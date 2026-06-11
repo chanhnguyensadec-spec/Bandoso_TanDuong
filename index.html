@@ -1283,7 +1283,7 @@ function doPost(e) {<br>
             <label>Mã PIN Admin</label>
             <input type="password" id="cfg-admin-pin" placeholder="Đổi mã PIN admin..." style="max-width:220px"/>
           </div>
-          <button class="btn btn-warn btn-sm" style="margin-top:8px" onclick="showToast('Đã cập nhật mã PIN Admin','success')"><i class="fa-solid fa-key"></i> Đổi mã PIN</button>
+          <button class="btn btn-warn btn-sm" style="margin-top:8px" onclick="changeAdminPin()"><i class="fa-solid fa-key"></i> Đổi mã PIN</button>
         </div>
         <div class="config-section" style="margin-top:16px">
           <h3><i class="fa-solid fa-person-walking"></i> PIN Thực địa (Sinh viên)</h3>
@@ -1392,7 +1392,7 @@ function doPost(e) {<br>
 const STATE = {
   // Cấu hình nhúng sẵn - không cần người dùng thiết lập
   gsSheetId: '1Eh0IDXWC_5dzjDnqR_nl1A7I7u04p4DDyLCG0jVHVXE',
-  gsScriptUrl: 'https://script.google.com/macros/s/AKfycbzhjl1o4ylulWa4Q2zMGt2xn70lZQcjadUmRZCqUt91F1u7YOlhQ53zS7MGse3S13Lv/exec',
+  gsScriptUrl: 'https://script.google.com/macros/s/AKfycbzaoApb2_tH7vjFqJyrMMIAhyJhkfVgm67Gr95j14GFquR6Bx6lGhOTlVEivDuL1VNu/exec',
   gsUrl: localStorage.getItem('gsUrl') || 'https://script.google.com/macros/s/AKfycbzaoApb2_tH7vjFqJyrMMIAhyJhkfVgm67Gr95j14GFquR6Bx6lGhOTlVEivDuL1VNu/exec',
   fieldPin: localStorage.getItem('fieldPin') || '1234',
   gsHeaderRowIdx: 0,   // Tự detect khi fetch GSheets
@@ -1526,6 +1526,32 @@ async function fetchFromGSheets() {
   } catch(e) { console.warn('GSheets fetch error', e); return null; }
 }
 
+// Tải PIN admin từ sheet TAI_KHOAN
+async function fetchAdminPin() {
+  if(!STATE.gsSheetId) return;
+  try {
+    const csvUrl = `https://docs.google.com/spreadsheets/d/${STATE.gsSheetId}/export?format=csv&sheet=TAI_KHOAN`;
+    const res = await fetch(csvUrl);
+    if(!res.ok) return; // Sheet chưa tồn tại → bỏ qua
+    const csv = await res.text();
+    const rows = parseCSV(csv);
+    // Tìm hàng có role=Admin
+    for(const row of rows) {
+      const role = String(row[2]||'').trim();
+      const pin  = String(row[1]||'').trim();
+      if(role === 'Admin' && pin) {
+        const adminAcc = STATE.accounts.find(a=>a.role==='Admin');
+        if(adminAcc && adminAcc.pin !== pin) {
+          adminAcc.pin = pin;
+          localStorage.setItem('accounts', JSON.stringify(STATE.accounts));
+          console.log('Admin PIN synced from Sheets');
+        }
+        break;
+      }
+    }
+  } catch(e) { console.warn('fetchAdminPin error', e); }
+}
+
 // Parse CSV chuẩn RFC 4180 - xử lý đúng dấu phẩy và xuống dòng trong ngoặc kép
 function parseCSV(text) {
   const rows = [];
@@ -1576,11 +1602,12 @@ async function refreshData() {
   if(data && data.length > 0) {
     STATE.points = data;
     STATE.gsConnected = true;
-    // Xóa cache localStorage cũ để không lẫn dữ liệu demo
     localStorage.removeItem('points');
     setGsStatus('connected');
     showToast(`Đã tải ${data.length} địa điểm từ Google Sheets`,'success');
     document.getElementById('last-sync-txt').textContent = 'Đồng bộ lần cuối: '+new Date().toLocaleTimeString('vi-VN');
+    // Đồng bộ PIN admin từ Sheets
+    fetchAdminPin();
   } else {
     setGsStatus('disconnected');
     showToast('Không tải được dữ liệu. Kiểm tra Google Sheets đã chia sẻ công khai chưa.','error');
@@ -2690,6 +2717,42 @@ async function bulkFillImagesAdmin() {
     showToast('Không kết nối được Apps Script: ' + err.message,'error');
     console.error('bulkFill fetch error:', err);
   }
+}
+
+async function changeAdminPin() {
+  const newPin = document.getElementById('cfg-admin-pin').value.trim();
+  if(!newPin) { showToast('Vui lòng nhập mã PIN mới','error'); return; }
+  if(newPin.length < 4) { showToast('Mã PIN phải có ít nhất 4 ký tự','error'); return; }
+
+  // Cập nhật trong STATE.accounts
+  const adminAcc = STATE.accounts.find(a => a.role === 'Admin');
+  if(adminAcc) {
+    adminAcc.pin = newPin;
+  } else {
+    STATE.accounts.push({id:'ADMIN', name:'Cán bộ xã phụ trách', pin:newPin, role:'Admin'});
+  }
+
+  // Lưu vào localStorage
+  localStorage.setItem('accounts', JSON.stringify(STATE.accounts));
+
+  // Đồng bộ lên Google Sheets sheet TAI_KHOAN
+  if(STATE.gsScriptUrl) {
+    try {
+      showToast('Đang lưu PIN lên Google Sheets...','info');
+      await postToGSheets({
+        action: 'saveAdminPin',
+        pin: newPin,
+        sheet: 'TAI_KHOAN'
+      });
+      showToast('✅ Đã đổi mã PIN Admin và đồng bộ lên Sheets', 'success');
+    } catch(e) {
+      showToast('✅ Đã đổi PIN cục bộ. Lưu ý: chưa đồng bộ được lên Sheets.', 'success');
+    }
+  } else {
+    showToast('✅ Đã đổi mã PIN Admin thành: ' + newPin, 'success');
+  }
+
+  document.getElementById('cfg-admin-pin').value = '';
 }
 
 function saveFieldPin() {
