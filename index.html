@@ -104,8 +104,17 @@ body { font-family: 'Be Vietnam Pro', sans-serif; background: var(--bg); color: 
 ══════════════════════════════════════════ */
 #screen-public { flex-direction: column; }
 .map-toolbar {
-  background: #fff; border-bottom: 1px solid var(--border); padding: 10px 16px;
-  display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+  background: #fff;
+  border-bottom: 1px solid var(--border);
+  padding: 10px 16px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  box-shadow: 0 2px 8px rgba(0,0,0,.06);
 }
 .search-wrap { position: relative; flex: 1; min-width: 180px; max-width: 300px; }
 .search-wrap i { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: var(--text3); font-size: 14px; }
@@ -652,6 +661,9 @@ tr:hover td { background: #f9fbf9; }
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
     scrollbar-width: none;
+    position: sticky;
+    top: 0;
+    z-index: 50;
   }
   .map-toolbar::-webkit-scrollbar { display: none; }
   .search-wrap { min-width: 140px; max-width: none; flex: 1; }
@@ -1036,13 +1048,13 @@ function doPost(e) {<br>
       <button class="btn-nav" onclick="showScreen('screen-login')"><i class="fa-solid fa-right-to-bracket"></i> Đăng nhập</button>
     </div>
   </div>
-  <div class="map-toolbar">
+  <div class="map-toolbar" id="pub-toolbar">
     <div class="search-wrap">
       <i class="fa-solid fa-magnifying-glass"></i>
       <input type="text" placeholder="Tìm địa điểm, làng nghề, sản phẩm..." id="pub-search" oninput="filterPublic()">
     </div>
     <div class="filter-pills">
-      <span class="pill pill-all" data-f="all" onclick="setPubFilter(this)">Tất cả</span>
+      <span class="pill pill-all active" data-f="all" onclick="setPubFilter(this)">Tất cả</span>
       <span class="pill pill-dtls" data-f="Di tích lịch sử" onclick="setPubFilter(this)">Di tích lịch sử</span>
       <span class="pill pill-ln" data-f="Làng nghề" onclick="setPubFilter(this)">Làng nghề</span>
       <span class="pill pill-ocop" data-f="Sản phẩm OCOP" onclick="setPubFilter(this)">Sản phẩm OCOP</span>
@@ -1825,7 +1837,12 @@ function renderPubMapMarkers(points) {
     const sel = STATE.selectedPoint===p.id;
     const m = L.marker([p.lat, p.lng], {icon: makeIcon(p.cat, sel)}).addTo(pubMap);
     m.bindPopup(makePopupHtml(p), {maxWidth:260, closeButton:true});
+    // Click → chọn điểm + zoom
     m.on('click', ()=>selectPoint(p.id));
+    // Hover chuột → hiện popup ngay (desktop)
+    m.on('mouseover', function() {
+      if(window.innerWidth > 768) this.openPopup();
+    });
     pubMarkers[p.id] = m;
   });
 }
