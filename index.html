@@ -894,6 +894,63 @@ tr:hover td { background: #f9fbf9; }
 /* Ẩn panel routing mặc định của Leaflet */
 .leaflet-routing-container { display: none !important; }
 
+
+/* ══════════════════════════════════════
+   ADMIN RESPONSIVE MOBILE
+══════════════════════════════════════ */
+@media (max-width: 768px) {
+  /* Sidebar admin ẩn mặc định */
+  .admin-nav {
+    position: fixed;
+    left: -220px;
+    top: 0; bottom: 0;
+    width: 220px;
+    z-index: 300;
+    transition: left .3s ease;
+    overflow-y: auto;
+  }
+  .admin-nav.open { left: 0; }
+
+  /* Overlay khi sidebar mở */
+  #admin-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,.4);
+    z-index: 299;
+  }
+  #admin-overlay.show { display: block; }
+
+  /* Nội dung chiếm full màn hình */
+  .admin-layout { flex-direction: column; }
+  .admin-content { padding: 12px; }
+
+  /* Stat grid 2 cột thay vì 4 */
+  .stat-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+
+  /* Table cuộn ngang */
+  .data-table { display: block; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+
+  /* Nút menu hamburger hiện trên mobile */
+  #admin-menu-btn {
+    display: flex !important;
+    align-items: center;
+    justify-content: center;
+    background: none;
+    border: none;
+    color: #fff;
+    font-size: 20px;
+    cursor: pointer;
+    padding: 4px 8px;
+    margin-right: 4px;
+  }
+}
+
+@media (min-width: 769px) {
+  #admin-menu-btn { display: none !important; }
+  #admin-overlay  { display: none !important; }
+}
+
 </style>
 </head>
 <body>
@@ -1158,6 +1215,7 @@ function doPost(e) {<br>
       <button class="btn-nav" onclick="showScreen('screen-login')"><i class="fa-solid fa-right-from-bracket"></i> Đăng xuất</button>
     </div>
   </div>
+  <div id="admin-overlay" onclick="toggleAdminNav()"></div>
   <div class="admin-layout">
     <div class="admin-nav">
       <div class="nav-item active" data-panel="admin-dashboard" onclick="switchAdminPanel(this)"><i class="fa-solid fa-gauge"></i> Tổng quan</div>
@@ -1526,26 +1584,23 @@ async function fetchFromGSheets() {
   } catch(e) { console.warn('GSheets fetch error', e); return null; }
 }
 
-// Tải PIN admin từ Apps Script (không cần sheet công khai)
-async function fetchAdminPin() {
+// Tải toàn bộ tài khoản từ sheet TAI_KHOAN
+async function fetchAdminPin() { await fetchAllAccounts(); } // alias cũ
+
+async function fetchAllAccounts() {
   if(!STATE.gsScriptUrl) return;
   try {
-    const params = encodeURIComponent(JSON.stringify({action:'getAdminPin'}));
+    const params = encodeURIComponent(JSON.stringify({action:'getAllAccounts'}));
     const res = await fetch(STATE.gsScriptUrl + '?payload=' + params, {redirect:'follow'});
     if(!res.ok) return;
     const text = await res.text();
     const data = JSON.parse(text);
-    if(data.pin) {
-      const adminAcc = STATE.accounts.find(a=>a.role==='Admin');
-      if(adminAcc) {
-        adminAcc.pin = data.pin;
-      } else {
-        STATE.accounts.push({id:'ADMIN', name:'Cán bộ xã phụ trách', pin:data.pin, role:'Admin'});
-      }
+    if(data.accounts && data.accounts.length > 0) {
+      STATE.accounts = data.accounts;
       localStorage.setItem('accounts', JSON.stringify(STATE.accounts));
-      console.log('Admin PIN synced from Sheets:', data.pin);
+      console.log('Accounts synced from Sheets:', STATE.accounts.length, 'accounts');
     }
-  } catch(e) { console.warn('fetchAdminPin error', e); }
+  } catch(e) { console.warn('fetchAllAccounts error', e); }
 }
 
 // Parse CSV chuẩn RFC 4180 - xử lý đúng dấu phẩy và xuống dòng trong ngoặc kép
@@ -1709,7 +1764,7 @@ async function doLogin() {
     // Thử tải PIN mới nhất từ Sheets trước khi kiểm tra
     const loginBtn = document.querySelector('button.btn-login');
     if(loginBtn) { loginBtn.disabled=true; loginBtn.innerHTML='<i class="fa-solid fa-spinner fa-spin"></i> Đang xác thực...'; }
-    await fetchAdminPin();
+    await fetchAllAccounts();
     if(loginBtn) { loginBtn.disabled=false; loginBtn.innerHTML='<i class="fa-solid fa-right-to-bracket"></i> Đăng nhập'; }
     const acc=STATE.accounts.find(a=>a.role==='Admin'&&a.pin===pin);
     if(!acc){err.textContent='Mã PIN không đúng. Vui lòng thử lại.';return;}
@@ -1717,8 +1772,11 @@ async function doLogin() {
     showScreen('screen-admin'); refreshData();
   } else if(isField) {
     const pin=document.getElementById('field-pin').value.trim();
-    const FIELD_PIN = STATE.fieldPin || '1234';
-    if(pin!==FIELD_PIN){err.textContent='Mã PIN thực địa không đúng.';return;}
+    // Tải tài khoản mới nhất từ Sheets
+    await fetchAllAccounts();
+    const fieldAcc = STATE.accounts.find(a=>a.role==='Field');
+    const FIELD_PIN = fieldAcc ? fieldAcc.pin : (STATE.fieldPin || '1234');
+    if(!pin||pin!==FIELD_PIN){err.textContent='Mã PIN thực địa không đúng.';return;}
     STATE.currentUser={name:'Sinh viên thực địa',role:'Field'};
     STATE.currentRole='field';
     document.getElementById('fd-username').textContent='Sinh viên thực địa';
@@ -1728,6 +1786,8 @@ async function doLogin() {
   } else {
     const id=document.getElementById('owner-id').value.trim().toUpperCase();
     const pin=document.getElementById('owner-pin').value.trim();
+    // Tải tài khoản mới nhất từ Sheets
+    await fetchAllAccounts();
     const acc=STATE.accounts.find(a=>a.id===id&&a.pin===pin&&a.role==='User');
     if(!acc){err.textContent='Mã điểm hoặc mã PIN không đúng.';return;}
     STATE.currentUser=acc; STATE.currentRole='owner';
@@ -1906,12 +1966,18 @@ function renderAdminMap() {
     adminMarkersMap = {};
     STATE.points.filter(p=>p.status==='Đã duyệt'&&p.lat&&p.lng).forEach(p=>{
       const m = L.marker([p.lat, p.lng], {icon: makeIcon(p.cat, false)}).addTo(adminMap);
-      m.bindPopup(`<div style="font-family:'Be Vietnam Pro',sans-serif">
+      const popupContent = `<div style="font-family:'Be Vietnam Pro',sans-serif;min-width:160px">
         <strong style="font-size:13px">${p.name}</strong>
         <div style="font-size:12px;color:#5a7060;margin-top:4px">${p.id} · ${p.cat}</div>
-        <button onclick="openEditPoint('${p.id}')" style="margin-top:8px;padding:5px 10px;background:#1a5c38;color:#fff;border:none;border-radius:6px;font-size:12px;cursor:pointer;font-family:inherit">
+        <div style="font-size:11px;color:#5a7060;margin-top:2px">${p.addr||''}</div>
+        <button onclick="openEditPoint('${p.id}')" style="margin-top:8px;padding:6px 12px;background:#1a5c38;color:#fff;border:none;border-radius:6px;font-size:12px;cursor:pointer;font-family:inherit;width:100%">
           <i class='fa-solid fa-pen'></i> Chỉnh sửa
-        </button></div>`, {maxWidth:220});
+        </button></div>`;
+      m.bindPopup(popupContent, {maxWidth:240});
+      // Hover chuột → hiện popup (desktop)
+      m.on('mouseover', function() { this.openPopup(); });
+      // Click → mở form sửa
+      m.on('click', function() { openEditPoint(p.id); });
       adminMarkersMap[p.id] = m;
     });
   }, 80);
@@ -1997,6 +2063,16 @@ function renderReview() {
     </div>`).join('');
 }
 
+function toggleAdminNav() {
+  const nav = document.querySelector('.admin-nav');
+  const overlay = document.getElementById('admin-overlay');
+  if(!nav) return;
+  const isOpen = nav.classList.contains('open');
+  nav.classList.toggle('open', !isOpen);
+  overlay && overlay.classList.toggle('show', !isOpen);
+}
+
+// Đóng sidebar khi chọn panel trên mobile
 function switchAdminPanel(el) {
   document.querySelectorAll('.admin-nav .nav-item').forEach(n=>n.classList.remove('active'));
   el.classList.add('active');
@@ -2759,14 +2835,24 @@ async function changeAdminPin() {
   document.getElementById('cfg-admin-pin').value = '';
 }
 
-function saveFieldPin() {
+async function saveFieldPin() {
   const pin = document.getElementById('setting-field-pin').value.trim();
   if(!pin||pin.length<4) { showToast('PIN phải có ít nhất 4 ký tự','error'); return; }
   STATE.fieldPin = pin;
   localStorage.setItem('fieldPin', pin);
   const el = document.getElementById('current-field-pin');
   if(el) el.textContent = pin;
-  showToast('Đã lưu PIN thực địa: ' + pin,'success');
+  // Lưu lên sheet TAI_KHOAN
+  if(STATE.gsScriptUrl) {
+    try {
+      await postToGSheets({action:'saveFieldPin', pin, sheet:'TAI_KHOAN'});
+      showToast('✅ Đã lưu PIN thực địa và đồng bộ lên Sheets','success');
+    } catch(e) {
+      showToast('✅ Đã lưu PIN thực địa cục bộ','success');
+    }
+  } else {
+    showToast('Đã lưu PIN thực địa: ' + pin,'success');
+  }
 }
 
 
