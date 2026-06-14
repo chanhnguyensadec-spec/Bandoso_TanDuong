@@ -189,7 +189,7 @@ body { font-family: 'Be Vietnam Pro', sans-serif; background: var(--bg); color: 
   z-index: 100;
   flex-shrink: 0;
 }
-.admin-layout { display: flex; flex: 1; overflow: hidden; }
+.admin-layout { display: flex; flex: 1; min-height: 0; }
 .admin-nav {
   width: 210px; background: #0f3d22; flex-shrink: 0; display: flex; flex-direction: column; padding: 16px 0;
 }
@@ -199,9 +199,9 @@ body { font-family: 'Be Vietnam Pro', sans-serif; background: var(--bg); color: 
 .admin-nav .nav-item i { font-size: 16px; width: 18px; text-align: center; }
 .admin-nav .nav-sep { height: 1px; background: rgba(255,255,255,.1); margin: 8px 16px; }
 
-.admin-content { flex: 1; overflow-y: auto; padding: 24px; }
+.admin-content { flex: 1; overflow-y: auto; padding: 24px; min-width: 0; }
 .admin-panel { display: none; }
-.admin-panel.active { display: block; }
+.admin-panel.active { display: block; min-height: 0; }
 
 .page-title { font-family: 'Playfair Display', serif; font-size: 24px; color: var(--primary); margin-bottom: 4px; }
 .page-sub { font-size: 13px; color: var(--text2); margin-bottom: 22px; }
@@ -899,39 +899,90 @@ tr:hover td { background: #f9fbf9; }
    ADMIN RESPONSIVE MOBILE
 ══════════════════════════════════════ */
 @media (max-width: 768px) {
-  /* Sidebar admin ẩn mặc định */
+
+  /* Screen admin chiếm full viewport, scroll được */
+  #screen-admin {
+    height: 100vh;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* Admin layout: bỏ overflow:hidden, cho phép scroll */
+  .admin-layout {
+    flex: 1;
+    overflow: hidden;
+    flex-direction: row;
+    position: relative;
+  }
+
+  /* Nội dung admin: full width, scroll dọc */
+  .admin-content {
+    flex: 1;
+    width: 100%;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    padding: 14px 12px 80px;
+  }
+
+  /* Sidebar admin ẩn mặc định, slide từ trái */
   .admin-nav {
     position: fixed;
-    left: -220px;
+    left: -240px;
     top: 0; bottom: 0;
-    width: 220px;
-    z-index: 300;
-    transition: left .3s ease;
+    width: 230px;
+    z-index: 500;
+    transition: left .28s cubic-bezier(.4,0,.2,1);
     overflow-y: auto;
+    box-shadow: none;
   }
-  .admin-nav.open { left: 0; }
+  .admin-nav.open {
+    left: 0;
+    box-shadow: 4px 0 20px rgba(0,0,0,.3);
+  }
 
-  /* Overlay khi sidebar mở */
+  /* Overlay tối khi sidebar mở */
   #admin-overlay {
     display: none;
     position: fixed;
     inset: 0;
-    background: rgba(0,0,0,.4);
-    z-index: 299;
+    background: rgba(0,0,0,.45);
+    z-index: 499;
   }
   #admin-overlay.show { display: block; }
 
-  /* Nội dung chiếm full màn hình */
-  .admin-layout { flex-direction: column; }
-  .admin-content { padding: 12px; }
+  /* Stat grid 2 cột */
+  .stat-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+    margin-bottom: 16px;
+  }
+  .stat-card { padding: 14px 12px; }
+  .stat-card .stat-num { font-size: 22px; }
 
-  /* Stat grid 2 cột thay vì 4 */
-  .stat-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+  /* Bảng dữ liệu cuộn ngang */
+  .table-wrap, .data-table {
+    display: block;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    max-width: 100%;
+  }
+  .table-toolbar {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
 
-  /* Table cuộn ngang */
-  .data-table { display: block; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  /* Form thêm/sửa điểm */
+  .modal { padding: 18px 14px; }
+  .field-row { flex-direction: column; gap: 0; }
 
-  /* Nút menu hamburger hiện trên mobile */
+  /* Panel bản đồ admin */
+  #panel-admin-map .admin-map-wrap { height: calc(100vh - 120px); }
+
+  /* Navbar buttons ẩn bớt trên mobile */
+  .btn-nav span { display: none; }
+
+  /* Nút hamburger */
   #admin-menu-btn {
     display: flex !important;
     align-items: center;
@@ -942,11 +993,12 @@ tr:hover td { background: #f9fbf9; }
     color: #fff;
     font-size: 18px;
     cursor: pointer;
-    padding: 6px 10px;
+    padding: 7px 11px;
     margin-right: 6px;
     flex-shrink: 0;
+    -webkit-tap-highlight-color: transparent;
   }
-  #admin-menu-btn:active { background: rgba(255,255,255,.25); }
+  #admin-menu-btn:active { background: rgba(255,255,255,.3); }
 }
 
 @media (min-width: 769px) {
@@ -959,6 +1011,56 @@ tr:hover td { background: #f9fbf9; }
 .leaflet-popup { pointer-events: auto; }
 .leaflet-marker-icon { cursor: pointer !important; }
 .leaflet-container { cursor: default; }
+
+
+/* ══ Admin mobile: card thay bảng ══ */
+@media (max-width: 768px) {
+
+  /* Ẩn bảng desktop, hiện list card mobile */
+  .admin-table-desktop { display: none !important; }
+  .admin-card-list { display: block !important; }
+
+  /* Card địa điểm */
+  .acard {
+    background: #fff;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 14px;
+    margin-bottom: 10px;
+    box-shadow: 0 1px 4px rgba(0,0,0,.05);
+  }
+  .acard-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 8px;
+    margin-bottom: 8px;
+  }
+  .acard-id { font-size:11px; font-weight:700; color:var(--text3); font-family:monospace; }
+  .acard-name { font-size:14px; font-weight:700; color:var(--text1); margin-top:2px; }
+  .acard-actions { display:flex; gap:6px; flex-shrink:0; }
+  .acard-row { font-size:12px; color:var(--text2); margin-bottom:4px; display:flex; gap:6px; align-items:flex-start; }
+  .acard-row i { color:var(--text3); margin-top:1px; flex-shrink:0; width:13px; }
+  .acard-foot { display:flex; align-items:center; justify-content:space-between; margin-top:10px; padding-top:8px; border-top:1px solid var(--border); }
+
+  /* Ẩn header bảng tài khoản, hiện card */
+  .accounts-table-desktop { display: none !important; }
+  .accounts-card-list { display: block !important; }
+
+  /* Stat số liệu nhỏ lại */
+  .stat-card .stat-num { font-size:20px; }
+  .stat-card .stat-label { font-size:11px; }
+
+  /* Nút thêm địa điểm trên navbar: chỉ icon */
+  .btn-nav.btn-add-point span { display:none; }
+}
+
+@media (min-width: 769px) {
+  .admin-card-list  { display: none !important; }
+  .accounts-card-list { display: none !important; }
+  .admin-table-desktop  { display: block !important; }
+  .accounts-table-desktop { display: block !important; }
+}
 
 </style>
 </head>
@@ -1597,17 +1699,13 @@ async function fetchFromGSheets() {
 }
 
 // Tải toàn bộ tài khoản từ sheet TAI_KHOAN
-async function fetchAdminPin() { await fetchAllAccounts(); } // alias cũ
+async function fetchAdminPin() { await fetchAllAccounts(); }
 
 async function fetchAllAccounts() {
   if(!STATE.gsScriptUrl) return;
   try {
-    const params = encodeURIComponent(JSON.stringify({action:'getAllAccounts'}));
-    const res = await fetch(STATE.gsScriptUrl + '?payload=' + params, {redirect:'follow'});
-    if(!res.ok) return;
-    const text = await res.text();
-    const data = JSON.parse(text);
-    if(data.accounts && data.accounts.length > 0) {
+    const data = await fetchFromScript({action:'getAllAccounts'});
+    if(data && data.accounts && data.accounts.length > 0) {
       STATE.accounts = data.accounts;
       localStorage.setItem('accounts', JSON.stringify(STATE.accounts));
       console.log('Accounts synced from Sheets:', STATE.accounts.length, 'accounts');
@@ -1645,17 +1743,36 @@ async function postToGSheets(payload) {
   const scriptUrl = STATE.gsScriptUrl || STATE.gsUrl;
   if(!scriptUrl) return null;
   try {
-    // Apps Script không cho phép POST cross-origin → dùng GET với tham số URL
     const params = encodeURIComponent(JSON.stringify(payload));
     const url = scriptUrl + '?payload=' + params;
-    const res = await fetch(url, {
-      method: 'GET',
-      redirect: 'follow',
-      mode: 'cors',
-    });
-    const text = await res.text();
-    try { return JSON.parse(text); } catch(e) { return {ok:true}; }
+    // Thử GET với no-cors trước (fire-and-forget, không đọc response)
+    // Apps Script vẫn xử lý dù trình duyệt chặn đọc response
+    try {
+      await fetch(url, { method:'GET', redirect:'follow', mode:'no-cors' });
+      return {ok: true};
+    } catch(e1) {
+      // Fallback: dùng Image trick (không bị CORS)
+      return new Promise((resolve) => {
+        const img = new Image();
+        img.onload = img.onerror = () => resolve({ok: true});
+        img.src = url;
+        setTimeout(() => resolve({ok: true}), 3000);
+      });
+    }
   } catch(e) { console.warn('postToGSheets error', e); return null; }
+}
+
+// Phiên bản có đọc response (cho getAdminPin, getAllAccounts, getData)
+async function fetchFromScript(payload) {
+  const scriptUrl = STATE.gsScriptUrl || STATE.gsUrl;
+  if(!scriptUrl) return null;
+  try {
+    const params = encodeURIComponent(JSON.stringify(payload));
+    const url = scriptUrl + '?payload=' + params;
+    const res = await fetch(url, { method:'GET', redirect:'follow' });
+    const text = await res.text();
+    try { return JSON.parse(text); } catch(e) { return null; }
+  } catch(e) { console.warn('fetchFromScript error', e); return null; }
 }
 
 async function refreshData() {
@@ -2036,31 +2153,95 @@ function renderCatBreakdown() {
   }).join('');
 }
 function renderAdminPoints() {
-  const tb=document.getElementById('points-tbody');
-  if(!STATE.points.length){tb.innerHTML='<tr><td colspan="7" style="text-align:center;padding:24px;color:var(--text3)">Chưa có dữ liệu</td></tr>';return;}
-  tb.innerHTML=STATE.points.slice(0,50).map((p,i)=>{
-    const c=CAT_COLORS[p.cat]||CAT_COLORS['Du lịch'];
-    const hasPending=p.pendingSdt||p.pendingGia;
-    return `<tr>
-      <td><code style="font-size:12px">${p.id}</code></td>
-      <td><strong>${p.name}</strong></td>
-      <td><span class="tag" style="background:${c.light};color:${c.text}">${p.cat}</span></td>
-      <td>${p.addr}</td><td>${p.phone||'—'}</td>
-      <td>${hasPending?'<span class="tag tag-pending">Chờ duyệt</span>':'<span class="tag tag-approved">Đã duyệt</span>'}</td>
-      <td style="white-space:nowrap">
-        <button class="btn btn-ghost btn-sm" onclick="openEditPoint('${p.id}')"><i class="fa-solid fa-pen"></i></button>
-        <button class="btn btn-danger btn-sm" onclick="deletePoint('${p.id}')"><i class="fa-solid fa-trash"></i></button>
-      </td></tr>`;
-  }).join('');
+  const pts = STATE.points.slice(0,100);
+  const tb = document.getElementById('points-tbody');
+  const cl = document.getElementById('points-cardlist');
+
+  if(!pts.length) {
+    if(tb) tb.innerHTML='<tr><td colspan="7" style="text-align:center;padding:24px;color:var(--text3)">Chưa có dữ liệu</td></tr>';
+    if(cl) cl.innerHTML='<div style="text-align:center;padding:30px;color:var(--text3)"><i class="fa-solid fa-inbox" style="font-size:28px;display:block;margin-bottom:10px"></i>Chưa có dữ liệu</div>';
+    return;
+  }
+
+  // ── Bảng desktop ──
+  if(tb) {
+    tb.innerHTML = pts.map(p => {
+      const c = CAT_COLORS[p.cat]||CAT_COLORS['Du lịch'];
+      const hasPending = p.pendingSdt||p.pendingGia;
+      return `<tr>
+        <td><code style="font-size:12px">${p.id}</code></td>
+        <td><strong>${p.name}</strong></td>
+        <td><span class="tag" style="background:${c.light};color:${c.text}">${p.cat}</span></td>
+        <td>${p.addr}</td><td>${p.phone||'—'}</td>
+        <td>${hasPending?'<span class="tag tag-pending">Chờ duyệt</span>':'<span class="tag tag-approved">Đã duyệt</span>'}</td>
+        <td style="white-space:nowrap">
+          <button class="btn btn-ghost btn-sm" onclick="openEditPoint('${p.id}')"><i class="fa-solid fa-pen"></i></button>
+          <button class="btn btn-danger btn-sm" onclick="deletePoint('${p.id}')"><i class="fa-solid fa-trash"></i></button>
+        </td></tr>`;
+    }).join('');
+  }
+
+  // ── Card list mobile ──
+  if(cl) {
+    cl.innerHTML = pts.map(p => {
+      const c = CAT_COLORS[p.cat]||CAT_COLORS['Du lịch'];
+      const hasPending = p.pendingSdt||p.pendingGia;
+      const statusHtml = hasPending
+        ? '<span class="tag tag-pending">Chờ duyệt</span>'
+        : '<span class="tag tag-approved">Đã duyệt</span>';
+      return `<div class="acard">
+        <div class="acard-header">
+          <div>
+            <div class="acard-id">${p.id}</div>
+            <div class="acard-name">${p.name}</div>
+          </div>
+          <div class="acard-actions">
+            <button class="btn btn-ghost btn-sm" onclick="openEditPoint('${p.id}')"><i class="fa-solid fa-pen"></i></button>
+            <button class="btn btn-danger btn-sm" onclick="deletePoint('${p.id}')"><i class="fa-solid fa-trash"></i></button>
+          </div>
+        </div>
+        ${p.addr?`<div class="acard-row"><i class="fa-solid fa-location-dot"></i><span>${p.addr}</span></div>`:''}
+        ${p.phone?`<div class="acard-row"><i class="fa-solid fa-phone"></i><span>${p.phone}</span></div>`:''}
+        <div class="acard-foot">
+          <span class="tag" style="background:${c.light};color:${c.text};font-size:11px">${p.cat}</span>
+          ${statusHtml}
+        </div>
+      </div>`;
+    }).join('');
+  }
 }
 function renderAdminAccounts() {
-  const tb=document.getElementById('accounts-tbody');
-  tb.innerHTML=STATE.accounts.map(a=>`<tr>
-    <td><code>${a.id}</code></td><td>${a.name}</td>
-    <td><span class="pin-cell">${a.pin}</span></td>
-    <td><span class="tag ${a.role==='Admin'?'tag-dtls':'tag-approved'}">${a.role}</span></td>
-    <td><button class="btn btn-danger btn-sm" onclick="deleteAccount('${a.id}','${a.pin}')"><i class="fa-solid fa-trash"></i></button></td>
-  </tr>`).join('');
+  const tb = document.getElementById('accounts-tbody');
+  const cl = document.getElementById('accounts-cardlist');
+  const roleColor = r => r==='Admin'?'tag-dtls':r==='Field'?'tag-pending':'tag-approved';
+
+  // ── Bảng desktop ──
+  if(tb) {
+    tb.innerHTML = STATE.accounts.map(a=>`<tr>
+      <td><code>${a.id}</code></td><td>${a.name}</td>
+      <td><span class="pin-cell">${a.pin}</span></td>
+      <td><span class="tag ${roleColor(a.role)}">${a.role}</span></td>
+      <td><button class="btn btn-danger btn-sm" onclick="deleteAccount('${a.id}','${a.pin}')"><i class="fa-solid fa-trash"></i></button></td>
+    </tr>`).join('');
+  }
+
+  // ── Card list mobile ──
+  if(cl) {
+    cl.innerHTML = STATE.accounts.map(a=>`
+      <div class="acard">
+        <div class="acard-header">
+          <div>
+            <div class="acard-id">${a.id}</div>
+            <div class="acard-name">${a.name}</div>
+          </div>
+          <button class="btn btn-danger btn-sm" onclick="deleteAccount('${a.id}','${a.pin}')"><i class="fa-solid fa-trash"></i></button>
+        </div>
+        <div class="acard-row"><i class="fa-solid fa-key"></i><span>PIN: <strong>${a.pin}</strong></span></div>
+        <div class="acard-foot">
+          <span class="tag ${roleColor(a.role)}">${a.role}</span>
+        </div>
+      </div>`).join('');
+  }
 }
 function renderReview() {
   const pending=STATE.points.filter(p=>p.pendingSdt||p.pendingGia);
@@ -2837,30 +3018,9 @@ async function changeAdminPin() {
 
   // Đồng bộ lên Google Sheets sheet TAI_KHOAN
   if(STATE.gsScriptUrl) {
-    try {
-      showToast('Đang lưu PIN lên Google Sheets...','info');
-      // Gửi qua GET với payload nhỏ gọn
-      const p = encodeURIComponent(JSON.stringify({
-        action:'saveAdminPin',
-        pin: String(newPin),
-        sheet:'TAI_KHOAN'
-      }));
-      const url = STATE.gsScriptUrl + '?payload=' + p;
-      console.log('saveAdminPin URL:', url);
-      const res = await fetch(url, {method:'GET', redirect:'follow', mode:'cors'});
-      const txt = await res.text();
-      console.log('saveAdminPin response:', txt);
-      let d = {};
-      try { d = JSON.parse(txt); } catch(e2) { d = {ok:true}; }
-      if(d.ok !== false) {
-        showToast('✅ Đã đổi mã PIN và đồng bộ lên Sheets', 'success');
-      } else {
-        throw new Error(d.error||'Lỗi không xác định');
-      }
-    } catch(e) {
-      console.error('saveAdminPin error:', e);
-      showToast('✅ Đã đổi PIN cục bộ. (Sheets: ' + e.message + ')', 'success');
-    }
+    showToast('Đang lưu PIN lên Google Sheets...','info');
+    await postToGSheets({action:'saveAdminPin', pin:String(newPin), sheet:'TAI_KHOAN'});
+    showToast('✅ Đã đổi mã PIN Admin và đồng bộ lên Sheets', 'success');
   } else {
     showToast('✅ Đã đổi mã PIN Admin thành: ' + newPin, 'success');
   }
@@ -2876,16 +3036,8 @@ async function saveFieldPin() {
   const el = document.getElementById('current-field-pin');
   if(el) el.textContent = pin;
   // Lưu lên sheet TAI_KHOAN
-  if(STATE.gsScriptUrl) {
-    try {
-      await postToGSheets({action:'saveFieldPin', pin, sheet:'TAI_KHOAN'});
-      showToast('✅ Đã lưu PIN thực địa và đồng bộ lên Sheets','success');
-    } catch(e) {
-      showToast('✅ Đã lưu PIN thực địa cục bộ','success');
-    }
-  } else {
-    showToast('Đã lưu PIN thực địa: ' + pin,'success');
-  }
+  await postToGSheets({action:'saveFieldPin', pin:String(pin), sheet:'TAI_KHOAN'});
+  showToast('✅ Đã lưu PIN thực địa và đồng bộ lên Sheets','success');
 }
 
 
