@@ -1702,15 +1702,55 @@ async function fetchFromGSheets() {
 async function fetchAdminPin() { await fetchAllAccounts(); }
 
 async function fetchAllAccounts() {
-  if(!STATE.gsScriptUrl) return;
+  // Dùng CSV export từ sheet TAI_KHOAN (không bị CORS, luôn hoạt động)
+  if(!STATE.gsSheetId) {
+    // Fallback: thử Apps Script nếu không có Sheet ID
+    if(!STATE.gsScriptUrl) return;
+    try {
+      const data = await fetchFromScript({action:'getAllAccounts'});
+      if(data && data.accounts && data.accounts.length > 0) {
+        STATE.accounts = data.accounts;
+        localStorage.setItem('accounts', JSON.stringify(STATE.accounts));
+        console.log('Accounts synced from Script:', STATE.accounts.length);
+      }
+    } catch(e) { console.warn('fetchAllAccounts script error', e); }
+    return;
+  }
   try {
-    const data = await fetchFromScript({action:'getAllAccounts'});
-    if(data && data.accounts && data.accounts.length > 0) {
-      STATE.accounts = data.accounts;
-      localStorage.setItem('accounts', JSON.stringify(STATE.accounts));
-      console.log('Accounts synced from Sheets:', STATE.accounts.length, 'accounts');
+    const csvUrl = 'https://docs.google.com/spreadsheets/d/' + STATE.gsSheetId
+                 + '/export?format=csv&sheet=TAI_KHOAN';
+    const res = await fetch(csvUrl);
+    if(!res.ok) return;
+    const csv = await res.text();
+    const rows = parseCSV(csv);
+    if(!rows || rows.length < 2) return;
+
+    // Tìm hàng header (chứa "Mã điểm" hoặc "Mã")
+    let headerIdx = 0;
+    for(let i=0; i<Math.min(4,rows.length); i++) {
+      if(rows[i].some(c=>String(c).toLowerCase().includes('mã'))) { headerIdx=i; break; }
     }
-  } catch(e) { console.warn('fetchAllAccounts error', e); }
+    const dataRows = rows.slice(headerIdx+1);
+    const accounts = [];
+    for(const row of dataRows) {
+      const id   = String(row[0]||'').trim();
+      const name = String(row[1]||'').trim();
+      const pin  = String(row[2]||'').trim();
+      const role = String(row[3]||'').trim();
+      if(!id || !pin) continue;
+      let appRole = 'User';
+      if(role==='Admin') appRole='Admin';
+      else if(role==='Field'||role==='Thực địa') appRole='Field';
+      accounts.push({id, name, pin, role:appRole});
+    }
+    if(accounts.length > 0) {
+      STATE.accounts = accounts;
+      // Xóa cache cũ trước khi lưu mới
+      localStorage.removeItem('accounts');
+      localStorage.setItem('accounts', JSON.stringify(STATE.accounts));
+      console.log('Accounts synced from CSV:', accounts.length);
+    }
+  } catch(e) { console.warn('fetchAllAccounts CSV error', e); }
 }
 
 // Parse CSV chuẩn RFC 4180 - xử lý đúng dấu phẩy và xuống dòng trong ngoặc kép
@@ -2205,6 +2245,10 @@ function renderAdminPoints() {
         <div class="acard-foot">
           <span class="tag" style="background:${c.light};color:${c.text};font-size:11px">${p.cat}</span>
           ${statusHtml}
+          <div style="display:flex;gap:6px">
+            <button class="btn btn-ghost btn-sm" onclick="openEditPoint('${p.id}')"><i class="fa-solid fa-pen"></i></button>
+            <button class="btn btn-danger btn-sm" onclick="deletePoint('${p.id}')"><i class="fa-solid fa-trash"></i></button>
+          </div>
         </div>
       </div>`;
     }).join('');
