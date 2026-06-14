@@ -352,9 +352,11 @@ tr:hover td { background: #f9fbf9; }
 #screen-field {
   flex-direction: column;
   background: #f0f4f1;
-  min-height: 100vh;
+  height: 100vh;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
+  position: relative;
+  z-index: 1;
 }
 .fd-navbar {
   background: #1a5c38;
@@ -363,9 +365,7 @@ tr:hover td { background: #f9fbf9; }
   align-items: center;
   padding: 14px 16px;
   gap: 10px;
-  position: sticky;
-  top: 0;
-  z-index: 100;
+  flex-shrink: 0;
   box-shadow: 0 2px 8px rgba(0,0,0,.2);
 }
 .fd-brand { font-size: 15px; font-weight: 700; flex: 1; }
@@ -376,8 +376,9 @@ tr:hover td { background: #f9fbf9; }
   background: #fff;
   border-bottom: 2px solid #e0ebe3;
   position: sticky;
-  top: 49px;
+  top: 0;
   z-index: 99;
+  flex-shrink: 0;
 }
 .fd-tab {
   flex: 1;
@@ -1892,7 +1893,16 @@ function showScreen(id) {
       if(cfgScript && STATE.gsScriptUrl) cfgScript.value = STATE.gsScriptUrl;
     }, 100);
   }
-  if(id==='screen-field') { refreshData(); autoFdId(); }
+  if(id==='screen-field') {
+    refreshData();
+    autoFdId();
+    // Cuộn về đầu trang thực địa
+    const sf = document.getElementById('screen-field');
+    if(sf) sf.scrollTop = 0;
+    // Reset tab về "Thêm điểm"
+    const firstTab = document.querySelector('.fd-tab[data-tab="fd-new"]');
+    if(firstTab) switchFdTab(firstTab);
+  }
 }
 
 function gotoPublic() { showScreen('screen-public'); refreshData(); }
