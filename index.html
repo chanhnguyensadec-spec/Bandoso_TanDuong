@@ -1703,55 +1703,67 @@ async function fetchFromGSheets() {
 async function fetchAdminPin() { await fetchAllAccounts(); }
 
 async function fetchAllAccounts() {
-  // Dùng CSV export từ sheet TAI_KHOAN (không bị CORS, luôn hoạt động)
-  if(!STATE.gsSheetId) {
-    // Fallback: thử Apps Script nếu không có Sheet ID
-    if(!STATE.gsScriptUrl) return;
-    try {
-      const data = await fetchFromScript({action:'getAllAccounts'});
-      if(data && data.accounts && data.accounts.length > 0) {
-        STATE.accounts = data.accounts;
-        localStorage.setItem('accounts', JSON.stringify(STATE.accounts));
-        console.log('Accounts synced from Script:', STATE.accounts.length);
-      }
-    } catch(e) { console.warn('fetchAllAccounts script error', e); }
-    return;
-  }
+  const SHEET_ID = STATE.gsSheetId || '1Eh0IDXWC_5dzjDnqR_nl1A7I7u04p4DDyLCG0jVHVXE';
   try {
-    const csvUrl = 'https://docs.google.com/spreadsheets/d/' + STATE.gsSheetId
-                 + '/export?format=csv&sheet=TAI_KHOAN';
+    // Dùng gid=1388127400 để trỏ chính xác sheet TAI_KHOAN
+    const csvUrl = 'https://docs.google.com/spreadsheets/d/' + SHEET_ID + '/export?format=csv&gid=1388127400';
     const res = await fetch(csvUrl);
-    if(!res.ok) return;
+
+    // Nếu không đọc được (chưa chia sẻ, lỗi mạng) → giữ nguyên tài khoản cũ
+    if(!res.ok) {
+      console.warn('TAI_KHOAN HTTP', res.status, '- chưa chia sẻ công khai? Giữ tài khoản local:', STATE.accounts.map(a=>a.id).join(', '));
+      return;
+    }
+
     const csv = await res.text();
+    // Kiểm tra nếu bị redirect về trang login Google
+    if(csv.includes('accounts.google.com') || csv.includes('ServiceLogin')) {
+      console.warn('TAI_KHOAN chưa chia sẻ công khai - giữ tài khoản local');
+      return;
+    }
+
     const rows = parseCSV(csv);
     if(!rows || rows.length < 2) return;
 
-    // Tìm hàng header (chứa "Mã điểm" hoặc "Mã")
-    let headerIdx = 0;
-    for(let i=0; i<Math.min(4,rows.length); i++) {
-      if(rows[i].some(c=>String(c).toLowerCase().includes('mã'))) { headerIdx=i; break; }
+    // Tìm hàng header (có "mã")
+    let hi = 0;
+    for(let i=0; i<Math.min(5, rows.length); i++) {
+      if(rows[i].some(c=>String(c).toLowerCase().includes('mã'))) { hi=i; break; }
     }
-    const dataRows = rows.slice(headerIdx+1);
+
+    // Parse tài khoản - cột: A=Mã, B=Tên, C=PIN, D=Quyền hạn
     const accounts = [];
-    for(const row of dataRows) {
-      const id   = String(row[0]||'').trim();
-      const name = String(row[1]||'').trim();
-      const pin  = String(row[2]||'').trim();
-      const role = String(row[3]||'').trim();
+    for(const row of rows.slice(hi+1)) {
+      const id  = String(row[0]||'').trim();
+      const pin = String(row[2]||'').trim();
       if(!id || !pin) continue;
-      let appRole = 'User';
-      if(role==='Admin') appRole='Admin';
-      else if(role==='Field'||role==='Thực địa') appRole='Field';
-      accounts.push({id, name, pin, role:appRole});
+      const name = String(row[1]||'').trim();
+      const r    = String(row[3]||'').trim();
+      // So sánh không phân biệt hoa thường
+      const rLow = r.toLowerCase();
+      const role = rLow==='admin' ? 'Admin' : (rLow==='field'||rLow==='thực địa' ? 'Field' : 'User');
+      accounts.push({id, name, pin, role});
     }
-    if(accounts.length > 0) {
-      STATE.accounts = accounts;
-      // Xóa cache cũ trước khi lưu mới
-      localStorage.removeItem('accounts');
-      localStorage.setItem('accounts', JSON.stringify(STATE.accounts));
-      console.log('Accounts synced from CSV:', accounts.length);
+
+    if(accounts.length === 0) {
+      console.warn('TAI_KHOAN không có dữ liệu - giữ tài khoản local');
+      return;
     }
-  } catch(e) { console.warn('fetchAllAccounts CSV error', e); }
+
+    // Đảm bảo luôn có Admin (fallback PIN 1234 nếu sheet chưa có)
+    if(!accounts.some(a=>a.role==='Admin')) {
+      const cur = STATE.accounts.find(a=>a.role==='Admin');
+      accounts.push(cur || {id:'ADMIN', name:'Cán bộ xã phụ trách', pin:'1234', role:'Admin'});
+    }
+
+    STATE.accounts = accounts;
+    localStorage.setItem('accounts', JSON.stringify(accounts));
+    console.log('✅ Tài khoản từ TAI_KHOAN:', accounts.map(a=>a.id+'('+a.role+'/'+a.pin+')').join(', '));
+
+  } catch(e) {
+    // Lỗi mạng → giữ tài khoản local, không reset
+    console.warn('fetchAllAccounts lỗi (giữ local):', e.message);
+  }
 }
 
 // Parse CSV chuẩn RFC 4180 - xử lý đúng dấu phẩy và xuống dòng trong ngoặc kép
@@ -1940,21 +1952,36 @@ async function doLogin() {
 
   if(isAdmin) {
     const pin=document.getElementById('admin-pin').value.trim();
-    // Thử tải PIN mới nhất từ Sheets trước khi kiểm tra
     const loginBtn = document.querySelector('button.btn-login');
     if(loginBtn) { loginBtn.disabled=true; loginBtn.innerHTML='<i class="fa-solid fa-spinner fa-spin"></i> Đang xác thực...'; }
     await fetchAllAccounts();
     if(loginBtn) { loginBtn.disabled=false; loginBtn.innerHTML='<i class="fa-solid fa-right-to-bracket"></i> Đăng nhập'; }
-    const acc=STATE.accounts.find(a=>a.role==='Admin'&&a.pin===pin);
-    if(!acc){err.textContent='Mã PIN không đúng. Vui lòng thử lại.';return;}
+
+    // Debug: hiện danh sách tài khoản đang có
+    console.log('STATE.accounts sau fetch:', JSON.stringify(STATE.accounts));
+
+    // Tìm Admin theo role VÀ pin
+    let acc = STATE.accounts.find(a=>a.role==='Admin' && a.pin===pin);
+
+    // Fallback: nếu không tìm theo role, thử tìm theo id=ADMIN
+    if(!acc) acc = STATE.accounts.find(a=>a.id==='ADMIN' && a.pin===pin);
+
+    if(!acc){
+      // Hiện danh sách role để debug
+      const roles = STATE.accounts.map(a=>a.id+'='+a.role+'/'+a.pin).join(', ');
+      console.warn('Login failed. Accounts:', roles, '| PIN nhập:', pin);
+      err.textContent='Mã PIN không đúng. Vui lòng thử lại.';
+      return;
+    }
     STATE.currentUser=acc; STATE.currentRole='admin';
     showScreen('screen-admin'); refreshData();
   } else if(isField) {
     const pin=document.getElementById('field-pin').value.trim();
     // Tải tài khoản mới nhất từ Sheets
     await fetchAllAccounts();
-    const fieldAcc = STATE.accounts.find(a=>a.role==='Field');
+    const fieldAcc = STATE.accounts.find(a=>a.role==='Field' || a.id==='FIELD');
     const FIELD_PIN = fieldAcc ? fieldAcc.pin : (STATE.fieldPin || '1234');
+    console.log('Field login: PIN nhập='+pin+', PIN sheet='+FIELD_PIN);
     if(!pin||pin!==FIELD_PIN){err.textContent='Mã PIN thực địa không đúng.';return;}
     STATE.currentUser={name:'Sinh viên thực địa',role:'Field'};
     STATE.currentRole='field';
