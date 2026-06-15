@@ -961,12 +961,16 @@ tr:hover td { background: #f9fbf9; }
   .stat-card { padding: 14px 12px; }
   .stat-card .stat-num { font-size: 22px; }
 
-  /* Bảng dữ liệu cuộn ngang */
-  .table-wrap, .data-table {
-    display: block;
+  /* Bảng dữ liệu cuộn ngang - không ẩn cột */
+  .admin-table-desktop {
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
-    max-width: 100%;
+    display: block;
+    width: 100%;
+  }
+  .admin-table-desktop table {
+    min-width: 600px; /* Đảm bảo tất cả cột hiển thị, cuộn ngang nếu cần */
+    width: 100%;
   }
   .table-toolbar {
     flex-wrap: wrap;
@@ -1394,7 +1398,7 @@ function doPost(e) {<br>
 
             </div>
           </div>
-          <table><thead><tr><th>Mã</th><th>Tên địa điểm</th><th>Phân loại</th><th>Địa chỉ</th><th>SĐT</th><th>Trạng thái</th><th>Thao tác</th></tr></thead>
+          <table><thead><tr><th>Mã</th><th>Tên địa điểm</th><th>Phân loại</th><th>Địa chỉ</th><th>SĐT</th><th>Trạng thái</th><th>Duyệt</th><th>Thao tác</th></tr></thead>
           <tbody id="points-tbody"></tbody></table>
         </div>
       </div>
@@ -1795,24 +1799,20 @@ function parseCSV(text) {
 async function postToGSheets(payload) {
   const scriptUrl = STATE.gsScriptUrl || STATE.gsUrl;
   if(!scriptUrl) return null;
-  try {
+  return new Promise((resolve) => {
     const params = encodeURIComponent(JSON.stringify(payload));
     const url = scriptUrl + '?payload=' + params;
-    // Thử GET với no-cors trước (fire-and-forget, không đọc response)
-    // Apps Script vẫn xử lý dù trình duyệt chặn đọc response
-    try {
-      await fetch(url, { method:'GET', redirect:'follow', mode:'no-cors' });
-      return {ok: true};
-    } catch(e1) {
-      // Fallback: dùng Image trick (không bị CORS)
-      return new Promise((resolve) => {
-        const img = new Image();
-        img.onload = img.onerror = () => resolve({ok: true});
-        img.src = url;
-        setTimeout(() => resolve({ok: true}), 3000);
-      });
-    }
-  } catch(e) { console.warn('postToGSheets error', e); return null; }
+    // Dùng iframe ẩn - Apps Script nhận được đầy đủ tham số, không bị CORS block
+    const iframe = document.createElement('iframe');
+    iframe.style.display = 'none';
+    iframe.src = url;
+    document.body.appendChild(iframe);
+    // Chờ 2.5s rồi dọn dẹp (Apps Script thường xử lý trong 1-2s)
+    setTimeout(() => {
+      try { document.body.removeChild(iframe); } catch(e) {}
+      resolve({ok: true});
+    }, 2500);
+  });
 }
 
 // Phiên bản có đọc response (cho getAdminPin, getAllAccounts, getData)
@@ -2251,6 +2251,12 @@ function renderAdminPoints() {
         <td><span class="tag" style="background:${c.light};color:${c.text}">${p.cat}</span></td>
         <td>${p.addr}</td><td>${p.phone||'—'}</td>
         <td>${hasPending?'<span class="tag tag-pending">Chờ duyệt</span>':'<span class="tag tag-approved">Đã duyệt</span>'}</td>
+        <td>
+          ${p.status!=='Đã duyệt'
+            ? `<button class="btn btn-sm" style="background:#1a5c38;color:#fff;border:none;white-space:nowrap" onclick="approvePoint('${p.id}')"><i class="fa-solid fa-check"></i> Duyệt</button>`
+            : `<button class="btn btn-ghost btn-sm" style="white-space:nowrap" onclick="rejectPoint('${p.id}')"><i class="fa-solid fa-clock"></i> Chờ duyệt</button>`
+          }
+        </td>
         <td style="white-space:nowrap">
           <button class="btn btn-ghost btn-sm" onclick="openEditPoint('${p.id}')"><i class="fa-solid fa-pen"></i></button>
           <button class="btn btn-danger btn-sm" onclick="deletePoint('${p.id}')"><i class="fa-solid fa-trash"></i></button>
@@ -2279,10 +2285,14 @@ function renderAdminPoints() {
         </div>
         ${p.addr?`<div class="acard-row"><i class="fa-solid fa-location-dot"></i><span>${p.addr}</span></div>`:''}
         ${p.phone?`<div class="acard-row"><i class="fa-solid fa-phone"></i><span>${p.phone}</span></div>`:''}
-        <div class="acard-foot">
+        <div class="acard-foot" style="flex-wrap:wrap;gap:6px">
           <span class="tag" style="background:${c.light};color:${c.text};font-size:11px">${p.cat}</span>
           ${statusHtml}
-          <div style="display:flex;gap:6px">
+          <div style="display:flex;gap:6px;margin-left:auto">
+            ${p.status!=='Đã duyệt'
+              ? `<button class="btn btn-sm" style="background:#1a5c38;color:#fff;border:none" onclick="approvePoint('${p.id}')"><i class="fa-solid fa-check"></i> Duyệt</button>`
+              : `<button class="btn btn-ghost btn-sm" onclick="rejectPoint('${p.id}')"><i class="fa-solid fa-clock"></i> Chờ</button>`
+            }
             <button class="btn btn-ghost btn-sm" onclick="openEditPoint('${p.id}')"><i class="fa-solid fa-pen"></i></button>
             <button class="btn btn-danger btn-sm" onclick="deletePoint('${p.id}')"><i class="fa-solid fa-trash"></i></button>
           </div>
@@ -2291,18 +2301,29 @@ function renderAdminPoints() {
     }).join('');
   }
 }
+async function syncAccountsFromSheet() {
+  showToast('Đang tải tài khoản từ sheet...','info');
+  await fetchAllAccounts();
+  renderAdminAccounts();
+  showToast('✅ Đã đồng bộ tài khoản từ sheet TAI_KHOAN','success');
+}
+
 function renderAdminAccounts() {
   const tb = document.getElementById('accounts-tbody');
   const cl = document.getElementById('accounts-cardlist');
   const roleColor = r => r==='Admin'?'tag-dtls':r==='Field'?'tag-pending':'tag-approved';
+  const roleLabel = r => r==='Admin'?'Cán bộ':r==='Field'?'Thực địa':'Chủ cơ sở';
 
   // ── Bảng desktop ──
   if(tb) {
     tb.innerHTML = STATE.accounts.map(a=>`<tr>
-      <td><code>${a.id}</code></td><td>${a.name}</td>
+      <td><code>${a.id}</code></td>
+      <td>${a.name}</td>
       <td><span class="pin-cell">${a.pin}</span></td>
-      <td><span class="tag ${roleColor(a.role)}">${a.role}</span></td>
-      <td><button class="btn btn-danger btn-sm" onclick="deleteAccount('${a.id}','${a.pin}')"><i class="fa-solid fa-trash"></i></button></td>
+      <td><span class="tag ${roleColor(a.role)}">${roleLabel(a.role)}</span></td>
+      <td style="white-space:nowrap">
+        <button class="btn btn-danger btn-sm" onclick="deleteAccount('${a.id}','${a.pin}')"><i class="fa-solid fa-trash"></i></button>
+      </td>
     </tr>`).join('');
   }
 
@@ -2313,13 +2334,13 @@ function renderAdminAccounts() {
         <div class="acard-header">
           <div>
             <div class="acard-id">${a.id}</div>
-            <div class="acard-name">${a.name}</div>
+            <div class="acard-name">${a.name||'—'}</div>
           </div>
           <button class="btn btn-danger btn-sm" onclick="deleteAccount('${a.id}','${a.pin}')"><i class="fa-solid fa-trash"></i></button>
         </div>
         <div class="acard-row"><i class="fa-solid fa-key"></i><span>PIN: <strong>${a.pin}</strong></span></div>
         <div class="acard-foot">
-          <span class="tag ${roleColor(a.role)}">${a.role}</span>
+          <span class="tag ${roleColor(a.role)}">${roleLabel(a.role)}</span>
         </div>
       </div>`).join('');
   }
