@@ -2,7 +2,7 @@
 <html lang="vi">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>Bản Đồ Số - Xã Tân Dương, Đồng Tháp</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@300;400;500;600;700&family=Playfair+Display:wght@600&display=swap" rel="stylesheet">
@@ -353,10 +353,12 @@ tr:hover td { background: #f9fbf9; }
   flex-direction: column;
   background: #f0f4f1;
   height: 100vh;
+  width: 100%;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
-  position: relative;
-  z-index: 1;
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  z-index: 200;
 }
 .fd-navbar {
   background: #1a5c38;
@@ -969,8 +971,8 @@ tr:hover td { background: #f9fbf9; }
     width: 100%;
   }
   .admin-table-desktop table {
-    min-width: 600px; /* Đảm bảo tất cả cột hiển thị, cuộn ngang nếu cần */
-    width: 100%;
+    min-width: 750px; /* Đủ rộng cho 8 cột kể cả Duyệt + Thao tác */
+    width: max-content;
   }
   .table-toolbar {
     flex-wrap: wrap;
@@ -984,8 +986,11 @@ tr:hover td { background: #f9fbf9; }
   /* Panel bản đồ admin */
   #panel-admin-map .admin-map-wrap { height: calc(100vh - 120px); }
 
-  /* Navbar buttons ẩn bớt trên mobile */
-  .btn-nav span { display: none; }
+  /* Navbar buttons ẩn text trên mobile - giữ icon */
+  .btn-nav:not(.btn-logout) span { display: none; }
+  .btn-nav:not(.btn-logout) { padding: 7px 9px; }
+  /* Nút đăng xuất luôn hiện */
+  .btn-nav.btn-logout { background: rgba(255,255,255,.15); }
 
   /* Nút hamburger */
   #admin-menu-btn {
@@ -1331,7 +1336,7 @@ function doPost(e) {<br>
       <button class="btn-nav" style="background:#e8870a;color:#fff;border-color:#e8870a" onclick="bulkFillImagesAdmin()" title="Điền link ảnh hàng loạt từ Drive (đặt tên file = Mã điểm)"><i class="fa-solid fa-images"></i> Điền ảnh loạt</button>
       <button class="btn-nav" style="background:#6a1b9a;color:#fff;border-color:#6a1b9a" onclick="testGSConnection()" title="Kiểm tra kết nối Apps Script"><i class="fa-solid fa-plug"></i> Test kết nối</button>
       <button class="btn-nav" style="background:#1a5c38;color:#fff;border-color:#1a5c38" onclick="openAddPoint()"><i class="fa-solid fa-plus"></i> Thêm địa điểm</button>
-      <button class="btn-nav" onclick="showScreen('screen-login')"><i class="fa-solid fa-right-from-bracket"></i> Đăng xuất</button>
+      <button class="btn-nav btn-logout" onclick="showScreen('screen-login')"><i class="fa-solid fa-right-from-bracket"></i> <span>Đăng xuất</span></button>
     </div>
   </div>
   <div id="admin-overlay" onclick="toggleAdminNav()"></div>
@@ -1483,7 +1488,7 @@ function doPost(e) {<br>
     <span class="brand">Cổng Chủ Cơ Sở <span id="owner-brand-name"></span></span>
     <div class="navbar-right">
       <span class="nav-badge" id="owner-status-badge">Đã duyệt</span>
-      <button class="btn-nav" onclick="showScreen('screen-login')"><i class="fa-solid fa-right-from-bracket"></i> Đăng xuất</button>
+      <button class="btn-nav btn-logout" onclick="showScreen('screen-login')"><i class="fa-solid fa-right-from-bracket"></i> <span>Đăng xuất</span></button>
     </div>
   </div>
   <div class="owner-layout">
@@ -1906,14 +1911,22 @@ function showScreen(id) {
     }, 100);
   }
   if(id==='screen-field') {
-    refreshData();
-    autoFdId();
-    // Cuộn về đầu trang thực địa
+    // Ẩn tất cả screen khác trước
+    document.querySelectorAll('.screen').forEach(s=>{
+      if(s.id!=='screen-field') s.style.display='none';
+    });
     const sf = document.getElementById('screen-field');
-    if(sf) sf.scrollTop = 0;
-    // Reset tab về "Thêm điểm"
-    const firstTab = document.querySelector('.fd-tab[data-tab="fd-new"]');
-    if(firstTab) switchFdTab(firstTab);
+    if(sf) {
+      sf.style.display = 'flex';
+      sf.scrollTop = 0;
+    }
+    // Reset về tab Thêm điểm
+    setTimeout(()=>{
+      const firstTab = document.querySelector('.fd-tab[data-tab="fd-new"]');
+      if(firstTab) switchFdTab(firstTab);
+      autoFdId();
+    }, 50);
+    refreshData();
   }
 }
 
@@ -2250,7 +2263,7 @@ function renderAdminPoints() {
         <td><strong>${p.name}</strong></td>
         <td><span class="tag" style="background:${c.light};color:${c.text}">${p.cat}</span></td>
         <td>${p.addr}</td><td>${p.phone||'—'}</td>
-        <td>${hasPending?'<span class="tag tag-pending">Chờ duyệt</span>':'<span class="tag tag-approved">Đã duyệt</span>'}</td>
+        <td>${p.status==='Chờ duyệt'?'<span class="tag tag-pending">Chờ duyệt</span>':'<span class="tag tag-approved">Đã duyệt</span>'}</td>
         <td>
           ${p.status!=='Đã duyệt'
             ? `<button class="btn btn-sm" style="background:#1a5c38;color:#fff;border:none;white-space:nowrap" onclick="approvePoint('${p.id}')"><i class="fa-solid fa-check"></i> Duyệt</button>`
@@ -2269,7 +2282,7 @@ function renderAdminPoints() {
     cl.innerHTML = pts.map(p => {
       const c = CAT_COLORS[p.cat]||CAT_COLORS['Du lịch'];
       const hasPending = p.pendingSdt||p.pendingGia;
-      const statusHtml = hasPending
+      const statusHtml = p.status==='Chờ duyệt'
         ? '<span class="tag tag-pending">Chờ duyệt</span>'
         : '<span class="tag tag-approved">Đã duyệt</span>';
       return `<div class="acard">
@@ -2380,8 +2393,16 @@ function switchAdminPanel(el) {
   document.querySelectorAll('.admin-nav .nav-item').forEach(n=>n.classList.remove('active'));
   el.classList.add('active');
   document.querySelectorAll('.admin-panel').forEach(p=>p.classList.remove('active'));
-  document.getElementById(el.dataset.panel).classList.add('active');
+  const panel = document.getElementById(el.dataset.panel);
+  if(panel) panel.classList.add('active');
   if(el.dataset.panel==='admin-map') renderAdminMap();
+  // Đóng sidebar trên mobile
+  if(window.innerWidth <= 768) {
+    document.querySelector('.admin-nav')?.classList.remove('open');
+    document.getElementById('admin-overlay')?.classList.remove('show');
+    const ac = document.querySelector('.admin-content');
+    if(ac) ac.scrollTop = 0;
+  }
 }
 
 // ══════════════════════════════════════════
@@ -3121,7 +3142,7 @@ async function changeAdminPin() {
   // Đồng bộ lên Google Sheets sheet TAI_KHOAN
   if(STATE.gsScriptUrl) {
     showToast('Đang lưu PIN lên Google Sheets...','info');
-    await postToGSheets({action:'saveAdminPin', pin:String(newPin), sheet:'TAI_KHOAN'});
+    await postToGSheets({action:'saveAccount', id:'ADMIN', name:'Cán bộ xã phụ trách', pin:String(newPin), role:'Admin', sheet:'TAI_KHOAN'});
     showToast('✅ Đã đổi mã PIN Admin và đồng bộ lên Sheets', 'success');
   } else {
     showToast('✅ Đã đổi mã PIN Admin thành: ' + newPin, 'success');
@@ -3138,7 +3159,7 @@ async function saveFieldPin() {
   const el = document.getElementById('current-field-pin');
   if(el) el.textContent = pin;
   // Lưu lên sheet TAI_KHOAN
-  await postToGSheets({action:'saveFieldPin', pin:String(pin), sheet:'TAI_KHOAN'});
+  await postToGSheets({action:'saveAccount', id:'FIELD', name:'Sinh viên thực địa', pin:String(pin), role:'Field', sheet:'TAI_KHOAN'});
   showToast('✅ Đã lưu PIN thực địa và đồng bộ lên Sheets','success');
 }
 
