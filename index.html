@@ -1803,20 +1803,38 @@ function parseCSV(text) {
 
 async function postToGSheets(payload) {
   const scriptUrl = STATE.gsScriptUrl || STATE.gsUrl;
-  if(!scriptUrl) return null;
+  if(!scriptUrl) { console.warn('postToGSheets: không có URL Apps Script'); return null; }
   return new Promise((resolve) => {
     const params = encodeURIComponent(JSON.stringify(payload));
-    const url = scriptUrl + '?payload=' + params;
-    // Dùng iframe ẩn - Apps Script nhận được đầy đủ tham số, không bị CORS block
-    const iframe = document.createElement('iframe');
-    iframe.style.display = 'none';
-    iframe.src = url;
-    document.body.appendChild(iframe);
-    // Chờ 2.5s rồi dọn dẹp (Apps Script thường xử lý trong 1-2s)
+    const cbName = 'gs_cb_' + Date.now();
+    const url = scriptUrl + '?payload=' + params + '&callback=' + cbName;
+    // JSONP: inject script tag, Apps Script trả về callback(data)
+    window[cbName] = (data) => {
+      try { delete window[cbName]; script.remove(); } catch(e) {}
+      console.log('postToGSheets OK:', payload.action, data);
+      resolve(data || {ok: true});
+    };
+    const script = document.createElement('script');
+    script.src = url;
+    script.onerror = () => {
+      try { delete window[cbName]; script.remove(); } catch(e) {}
+      console.warn('postToGSheets script error - thử fetch fallback');
+      // Fallback: fetch với redirect follow
+      fetch(scriptUrl + '?payload=' + params, {method:'GET', redirect:'follow', mode:'no-cors'})
+        .then(() => resolve({ok:true}))
+        .catch(() => resolve({ok:false}));
+    };
+    document.head.appendChild(script);
+    // Timeout 5s
     setTimeout(() => {
-      try { document.body.removeChild(iframe); } catch(e) {}
-      resolve({ok: true});
-    }, 2500);
+      if(window[cbName]) {
+        try { delete window[cbName]; script.remove(); } catch(e) {}
+        console.warn('postToGSheets timeout - dùng no-cors fallback');
+        fetch(scriptUrl + '?payload=' + params, {method:'GET', redirect:'follow', mode:'no-cors'})
+          .then(() => resolve({ok:true}))
+          .catch(() => resolve({ok:false}));
+      }
+    }, 5000);
   });
 }
 
