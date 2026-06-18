@@ -2,7 +2,7 @@
 <html lang="vi">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>Bản Đồ Số - Xã Tân Dương, Đồng Tháp</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@300;400;500;600;700&family=Playfair+Display:wght@600&display=swap" rel="stylesheet">
@@ -189,7 +189,7 @@ body { font-family: 'Be Vietnam Pro', sans-serif; background: var(--bg); color: 
   z-index: 100;
   flex-shrink: 0;
 }
-.admin-layout { display: flex; flex: 1; overflow: hidden; }
+.admin-layout { display: flex; flex: 1; min-height: 0; }
 .admin-nav {
   width: 210px; background: #0f3d22; flex-shrink: 0; display: flex; flex-direction: column; padding: 16px 0;
 }
@@ -199,9 +199,9 @@ body { font-family: 'Be Vietnam Pro', sans-serif; background: var(--bg); color: 
 .admin-nav .nav-item i { font-size: 16px; width: 18px; text-align: center; }
 .admin-nav .nav-sep { height: 1px; background: rgba(255,255,255,.1); margin: 8px 16px; }
 
-.admin-content { flex: 1; overflow-y: auto; padding: 24px; }
+.admin-content { flex: 1; overflow-y: auto; padding: 24px; min-width: 0; }
 .admin-panel { display: none; }
-.admin-panel.active { display: block; }
+.admin-panel.active { display: block; min-height: 0; }
 
 .page-title { font-family: 'Playfair Display', serif; font-size: 24px; color: var(--primary); margin-bottom: 4px; }
 .page-sub { font-size: 13px; color: var(--text2); margin-bottom: 22px; }
@@ -352,9 +352,13 @@ tr:hover td { background: #f9fbf9; }
 #screen-field {
   flex-direction: column;
   background: #f0f4f1;
-  min-height: 100vh;
+  height: 100vh;
+  width: 100%;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  z-index: 200;
 }
 .fd-navbar {
   background: #1a5c38;
@@ -363,9 +367,7 @@ tr:hover td { background: #f9fbf9; }
   align-items: center;
   padding: 14px 16px;
   gap: 10px;
-  position: sticky;
-  top: 0;
-  z-index: 100;
+  flex-shrink: 0;
   box-shadow: 0 2px 8px rgba(0,0,0,.2);
 }
 .fd-brand { font-size: 15px; font-weight: 700; flex: 1; }
@@ -376,8 +378,9 @@ tr:hover td { background: #f9fbf9; }
   background: #fff;
   border-bottom: 2px solid #e0ebe3;
   position: sticky;
-  top: 49px;
+  top: 0;
   z-index: 99;
+  flex-shrink: 0;
 }
 .fd-tab {
   flex: 1;
@@ -894,6 +897,181 @@ tr:hover td { background: #f9fbf9; }
 /* Ẩn panel routing mặc định của Leaflet */
 .leaflet-routing-container { display: none !important; }
 
+
+/* ══════════════════════════════════════
+   ADMIN RESPONSIVE MOBILE
+══════════════════════════════════════ */
+@media (max-width: 768px) {
+
+  /* Screen admin chiếm full viewport, scroll được */
+  #screen-admin {
+    height: 100vh;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* Admin layout: bỏ overflow:hidden, cho phép scroll */
+  .admin-layout {
+    flex: 1;
+    overflow: hidden;
+    flex-direction: row;
+    position: relative;
+  }
+
+  /* Nội dung admin: full width, scroll dọc */
+  .admin-content {
+    flex: 1;
+    width: 100%;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    padding: 14px 12px 80px;
+  }
+
+  /* Sidebar admin ẩn mặc định, slide từ trái */
+  .admin-nav {
+    position: fixed;
+    left: -240px;
+    top: 0; bottom: 0;
+    width: 230px;
+    z-index: 500;
+    transition: left .28s cubic-bezier(.4,0,.2,1);
+    overflow-y: auto;
+    box-shadow: none;
+  }
+  .admin-nav.open {
+    left: 0;
+    box-shadow: 4px 0 20px rgba(0,0,0,.3);
+  }
+
+  /* Overlay tối khi sidebar mở */
+  #admin-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,.45);
+    z-index: 499;
+  }
+  #admin-overlay.show { display: block; }
+
+  /* Stat grid 2 cột */
+  .stat-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+    margin-bottom: 16px;
+  }
+  .stat-card { padding: 14px 12px; }
+  .stat-card .stat-num { font-size: 22px; }
+
+  /* Bảng dữ liệu cuộn ngang - không ẩn cột */
+  .admin-table-desktop {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    display: block;
+    width: 100%;
+  }
+  .admin-table-desktop table {
+    min-width: 750px; /* Đủ rộng cho 8 cột kể cả Duyệt + Thao tác */
+    width: max-content;
+  }
+  .table-toolbar {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  /* Form thêm/sửa điểm */
+  .modal { padding: 18px 14px; }
+  .field-row { flex-direction: column; gap: 0; }
+
+  /* Panel bản đồ admin */
+  #panel-admin-map .admin-map-wrap { height: calc(100vh - 120px); }
+
+  /* Navbar buttons ẩn text trên mobile - giữ icon */
+  .btn-nav:not(.btn-logout) span { display: none; }
+  .btn-nav:not(.btn-logout) { padding: 7px 9px; }
+  /* Nút đăng xuất luôn hiện */
+  .btn-nav.btn-logout { background: rgba(255,255,255,.15); }
+
+  /* Nút hamburger */
+  #admin-menu-btn {
+    display: flex !important;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255,255,255,.15);
+    border: 1px solid rgba(255,255,255,.3);
+    border-radius: 8px;
+    color: #fff;
+    font-size: 18px;
+    cursor: pointer;
+    padding: 7px 11px;
+    margin-right: 6px;
+    flex-shrink: 0;
+    -webkit-tap-highlight-color: transparent;
+  }
+  #admin-menu-btn:active { background: rgba(255,255,255,.3); }
+}
+
+@media (min-width: 769px) {
+  #admin-menu-btn { display: none !important; }
+  #admin-overlay  { display: none !important; }
+}
+
+
+/* Leaflet popup và marker */
+.leaflet-popup { pointer-events: auto; }
+.leaflet-marker-icon { cursor: pointer !important; }
+.leaflet-container { cursor: default; }
+
+
+/* ══ Admin mobile: card thay bảng ══ */
+@media (max-width: 768px) {
+
+  /* Ẩn bảng desktop, hiện list card mobile */
+  .admin-table-desktop { display: none !important; }
+  .admin-card-list { display: block !important; }
+
+  /* Card địa điểm */
+  .acard {
+    background: #fff;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 14px;
+    margin-bottom: 10px;
+    box-shadow: 0 1px 4px rgba(0,0,0,.05);
+  }
+  .acard-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 8px;
+    margin-bottom: 8px;
+  }
+  .acard-id { font-size:11px; font-weight:700; color:var(--text3); font-family:monospace; }
+  .acard-name { font-size:14px; font-weight:700; color:var(--text1); margin-top:2px; }
+  .acard-actions { display:flex; gap:6px; flex-shrink:0; }
+  .acard-row { font-size:12px; color:var(--text2); margin-bottom:4px; display:flex; gap:6px; align-items:flex-start; }
+  .acard-row i { color:var(--text3); margin-top:1px; flex-shrink:0; width:13px; }
+  .acard-foot { display:flex; align-items:center; justify-content:space-between; margin-top:10px; padding-top:8px; border-top:1px solid var(--border); }
+
+  /* Ẩn header bảng tài khoản, hiện card */
+  .accounts-table-desktop { display: none !important; }
+  .accounts-card-list { display: block !important; }
+
+  /* Stat số liệu nhỏ lại */
+  .stat-card .stat-num { font-size:20px; }
+  .stat-card .stat-label { font-size:11px; }
+
+  /* Nút thêm địa điểm trên navbar: chỉ icon */
+  .btn-nav.btn-add-point span { display:none; }
+}
+
+@media (min-width: 769px) {
+  .admin-card-list  { display: none !important; }
+  .accounts-card-list { display: none !important; }
+  .admin-table-desktop  { display: block !important; }
+  .accounts-table-desktop { display: block !important; }
+}
+
 </style>
 </head>
 <body>
@@ -1144,6 +1322,9 @@ function doPost(e) {<br>
 <!-- ══════════ SCREEN: ADMIN ══════════ -->
 <div class="screen" id="screen-admin">
   <div class="navbar">
+    <button id="admin-menu-btn" onclick="toggleAdminNav()">
+      <i class="fa-solid fa-bars"></i>
+    </button>
     <i class="fa-solid fa-map-location-dot" style="font-size:20px"></i>
     <span class="brand">Bản Đồ Số <span>/ Quản trị</span></span>
     <div class="navbar-right">
@@ -1155,9 +1336,10 @@ function doPost(e) {<br>
       <button class="btn-nav" style="background:#e8870a;color:#fff;border-color:#e8870a" onclick="bulkFillImagesAdmin()" title="Điền link ảnh hàng loạt từ Drive (đặt tên file = Mã điểm)"><i class="fa-solid fa-images"></i> Điền ảnh loạt</button>
       <button class="btn-nav" style="background:#6a1b9a;color:#fff;border-color:#6a1b9a" onclick="testGSConnection()" title="Kiểm tra kết nối Apps Script"><i class="fa-solid fa-plug"></i> Test kết nối</button>
       <button class="btn-nav" style="background:#1a5c38;color:#fff;border-color:#1a5c38" onclick="openAddPoint()"><i class="fa-solid fa-plus"></i> Thêm địa điểm</button>
-      <button class="btn-nav" onclick="showScreen('screen-login')"><i class="fa-solid fa-right-from-bracket"></i> Đăng xuất</button>
+      <button class="btn-nav btn-logout" onclick="showScreen('screen-login')"><i class="fa-solid fa-right-from-bracket"></i> <span>Đăng xuất</span></button>
     </div>
   </div>
+  <div id="admin-overlay" onclick="toggleAdminNav()"></div>
   <div class="admin-layout">
     <div class="admin-nav">
       <div class="nav-item active" data-panel="admin-dashboard" onclick="switchAdminPanel(this)"><i class="fa-solid fa-gauge"></i> Tổng quan</div>
@@ -1221,7 +1403,7 @@ function doPost(e) {<br>
 
             </div>
           </div>
-          <table><thead><tr><th>Mã</th><th>Tên địa điểm</th><th>Phân loại</th><th>Địa chỉ</th><th>SĐT</th><th>Trạng thái</th><th>Thao tác</th></tr></thead>
+          <table><thead><tr><th>Mã</th><th>Tên địa điểm</th><th>Phân loại</th><th>Địa chỉ</th><th>SĐT</th><th>Trạng thái</th><th>Duyệt</th><th>Thao tác</th></tr></thead>
           <tbody id="points-tbody"></tbody></table>
         </div>
       </div>
@@ -1283,7 +1465,7 @@ function doPost(e) {<br>
             <label>Mã PIN Admin</label>
             <input type="password" id="cfg-admin-pin" placeholder="Đổi mã PIN admin..." style="max-width:220px"/>
           </div>
-          <button class="btn btn-warn btn-sm" style="margin-top:8px" onclick="showToast('Đã cập nhật mã PIN Admin','success')"><i class="fa-solid fa-key"></i> Đổi mã PIN</button>
+          <button class="btn btn-warn btn-sm" style="margin-top:8px" onclick="changeAdminPin()"><i class="fa-solid fa-key"></i> Đổi mã PIN</button>
         </div>
         <div class="config-section" style="margin-top:16px">
           <h3><i class="fa-solid fa-person-walking"></i> PIN Thực địa (Sinh viên)</h3>
@@ -1306,7 +1488,7 @@ function doPost(e) {<br>
     <span class="brand">Cổng Chủ Cơ Sở <span id="owner-brand-name"></span></span>
     <div class="navbar-right">
       <span class="nav-badge" id="owner-status-badge">Đã duyệt</span>
-      <button class="btn-nav" onclick="showScreen('screen-login')"><i class="fa-solid fa-right-from-bracket"></i> Đăng xuất</button>
+      <button class="btn-nav btn-logout" onclick="showScreen('screen-login')"><i class="fa-solid fa-right-from-bracket"></i> <span>Đăng xuất</span></button>
     </div>
   </div>
   <div class="owner-layout">
@@ -1392,7 +1574,7 @@ function doPost(e) {<br>
 const STATE = {
   // Cấu hình nhúng sẵn - không cần người dùng thiết lập
   gsSheetId: '1Eh0IDXWC_5dzjDnqR_nl1A7I7u04p4DDyLCG0jVHVXE',
-  gsScriptUrl: 'https://script.google.com/macros/s/AKfycbzhjl1o4ylulWa4Q2zMGt2xn70lZQcjadUmRZCqUt91F1u7YOlhQ53zS7MGse3S13Lv/exec',
+  gsScriptUrl: 'https://script.google.com/macros/s/AKfycbzaoApb2_tH7vjFqJyrMMIAhyJhkfVgm67Gr95j14GFquR6Bx6lGhOTlVEivDuL1VNu/exec',
   gsUrl: localStorage.getItem('gsUrl') || 'https://script.google.com/macros/s/AKfycbzaoApb2_tH7vjFqJyrMMIAhyJhkfVgm67Gr95j14GFquR6Bx6lGhOTlVEivDuL1VNu/exec',
   fieldPin: localStorage.getItem('fieldPin') || '1234',
   gsHeaderRowIdx: 0,   // Tự detect khi fetch GSheets
@@ -1526,6 +1708,73 @@ async function fetchFromGSheets() {
   } catch(e) { console.warn('GSheets fetch error', e); return null; }
 }
 
+// Tải toàn bộ tài khoản từ sheet TAI_KHOAN
+async function fetchAdminPin() { await fetchAllAccounts(); }
+
+async function fetchAllAccounts() {
+  const SHEET_ID = STATE.gsSheetId || '1Eh0IDXWC_5dzjDnqR_nl1A7I7u04p4DDyLCG0jVHVXE';
+  try {
+    // Dùng gid=1388127400 để trỏ chính xác sheet TAI_KHOAN
+    const csvUrl = 'https://docs.google.com/spreadsheets/d/' + SHEET_ID + '/export?format=csv&gid=1388127400';
+    const res = await fetch(csvUrl);
+
+    // Nếu không đọc được (chưa chia sẻ, lỗi mạng) → giữ nguyên tài khoản cũ
+    if(!res.ok) {
+      console.warn('TAI_KHOAN HTTP', res.status, '- chưa chia sẻ công khai? Giữ tài khoản local:', STATE.accounts.map(a=>a.id).join(', '));
+      return;
+    }
+
+    const csv = await res.text();
+    // Kiểm tra nếu bị redirect về trang login Google
+    if(csv.includes('accounts.google.com') || csv.includes('ServiceLogin')) {
+      console.warn('TAI_KHOAN chưa chia sẻ công khai - giữ tài khoản local');
+      return;
+    }
+
+    const rows = parseCSV(csv);
+    if(!rows || rows.length < 2) return;
+
+    // Tìm hàng header (có "mã")
+    let hi = 0;
+    for(let i=0; i<Math.min(5, rows.length); i++) {
+      if(rows[i].some(c=>String(c).toLowerCase().includes('mã'))) { hi=i; break; }
+    }
+
+    // Parse tài khoản - cột: A=Mã, B=Tên, C=PIN, D=Quyền hạn
+    const accounts = [];
+    for(const row of rows.slice(hi+1)) {
+      const id  = String(row[0]||'').trim();
+      const pin = String(row[2]||'').trim();
+      if(!id || !pin) continue;
+      const name = String(row[1]||'').trim();
+      const r    = String(row[3]||'').trim();
+      // So sánh không phân biệt hoa thường
+      const rLow = r.toLowerCase();
+      const role = rLow==='admin' ? 'Admin' : (rLow==='field'||rLow==='thực địa' ? 'Field' : 'User');
+      accounts.push({id, name, pin, role});
+    }
+
+    if(accounts.length === 0) {
+      console.warn('TAI_KHOAN không có dữ liệu - giữ tài khoản local');
+      return;
+    }
+
+    // Đảm bảo luôn có Admin (fallback PIN 1234 nếu sheet chưa có)
+    if(!accounts.some(a=>a.role==='Admin')) {
+      const cur = STATE.accounts.find(a=>a.role==='Admin');
+      accounts.push(cur || {id:'ADMIN', name:'Cán bộ xã phụ trách', pin:'1234', role:'Admin'});
+    }
+
+    STATE.accounts = accounts;
+    localStorage.setItem('accounts', JSON.stringify(accounts));
+    console.log('✅ Tài khoản từ TAI_KHOAN:', accounts.map(a=>a.id+'('+a.role+'/'+a.pin+')').join(', '));
+
+  } catch(e) {
+    // Lỗi mạng → giữ tài khoản local, không reset
+    console.warn('fetchAllAccounts lỗi (giữ local):', e.message);
+  }
+}
+
 // Parse CSV chuẩn RFC 4180 - xử lý đúng dấu phẩy và xuống dòng trong ngoặc kép
 function parseCSV(text) {
   const rows = [];
@@ -1554,19 +1803,71 @@ function parseCSV(text) {
 
 async function postToGSheets(payload) {
   const scriptUrl = STATE.gsScriptUrl || STATE.gsUrl;
+  if(!scriptUrl) {
+    console.error('❌ postToGSheets: KHÔNG có URL Apps Script đã cấu hình');
+    showToast('Lỗi: chưa cấu hình URL Apps Script','error');
+    return null;
+  }
+  console.log('📤 postToGSheets gửi:', payload.action, payload);
+
+  return new Promise((resolve) => {
+    const params = encodeURIComponent(JSON.stringify(payload));
+    const cbName = 'gs_cb_' + Date.now() + '_' + Math.floor(Math.random()*10000);
+    const url = scriptUrl + '?payload=' + params + '&callback=' + cbName;
+    console.log('📤 JSONP URL:', url);
+
+    let resolved = false;
+
+    window[cbName] = (data) => {
+      if(resolved) return;
+      resolved = true;
+      console.log('✅ postToGSheets NHẬN PHẢN HỒI:', payload.action, JSON.stringify(data));
+      try { delete window[cbName]; } catch(e){}
+      try { script.remove(); } catch(e){}
+      if(data && data.ok === false) {
+        console.error('❌ Apps Script báo lỗi:', data.error);
+        showToast('Lỗi từ Sheets: ' + (data.error||'Không rõ'), 'error');
+      }
+      resolve(data || {ok: true});
+    };
+
+    const script = document.createElement('script');
+    script.src = url;
+    script.onerror = (err) => {
+      if(resolved) return;
+      resolved = true;
+      console.error('❌ postToGSheets: script tag lỗi (network/syntax)', err);
+      showToast('⚠️ Không gọi được Apps Script. Kiểm tra URL hoặc Deploy lại.','error');
+      try { delete window[cbName]; } catch(e){}
+      try { script.remove(); } catch(e){}
+      resolve({ok:false, error:'script load error'});
+    };
+    document.head.appendChild(script);
+
+    setTimeout(() => {
+      if(!resolved) {
+        resolved = true;
+        console.error('❌ postToGSheets TIMEOUT sau 8s - Apps Script không phản hồi.', payload.action);
+        showToast('⚠️ Apps Script không phản hồi (timeout). Kiểm tra đã Deploy lại chưa.','error');
+        try { delete window[cbName]; } catch(e){}
+        try { script.remove(); } catch(e){}
+        resolve({ok:false, error:'timeout'});
+      }
+    }, 8000);
+  });
+}
+
+// Phiên bản có đọc response (cho getAdminPin, getAllAccounts, getData)
+async function fetchFromScript(payload) {
+  const scriptUrl = STATE.gsScriptUrl || STATE.gsUrl;
   if(!scriptUrl) return null;
   try {
-    // Apps Script không cho phép POST cross-origin → dùng GET với tham số URL
     const params = encodeURIComponent(JSON.stringify(payload));
     const url = scriptUrl + '?payload=' + params;
-    const res = await fetch(url, {
-      method: 'GET',
-      redirect: 'follow',
-      mode: 'cors',
-    });
+    const res = await fetch(url, { method:'GET', redirect:'follow' });
     const text = await res.text();
-    try { return JSON.parse(text); } catch(e) { return {ok:true}; }
-  } catch(e) { console.warn('postToGSheets error', e); return null; }
+    try { return JSON.parse(text); } catch(e) { return null; }
+  } catch(e) { console.warn('fetchFromScript error', e); return null; }
 }
 
 async function refreshData() {
@@ -1576,11 +1877,12 @@ async function refreshData() {
   if(data && data.length > 0) {
     STATE.points = data;
     STATE.gsConnected = true;
-    // Xóa cache localStorage cũ để không lẫn dữ liệu demo
     localStorage.removeItem('points');
     setGsStatus('connected');
     showToast(`Đã tải ${data.length} địa điểm từ Google Sheets`,'success');
     document.getElementById('last-sync-txt').textContent = 'Đồng bộ lần cuối: '+new Date().toLocaleTimeString('vi-VN');
+    // Đồng bộ PIN admin từ Sheets
+    fetchAdminPin();
   } else {
     setGsStatus('disconnected');
     showToast('Không tải được dữ liệu. Kiểm tra Google Sheets đã chia sẻ công khai chưa.','error');
@@ -1645,7 +1947,24 @@ function showScreen(id) {
       if(cfgScript && STATE.gsScriptUrl) cfgScript.value = STATE.gsScriptUrl;
     }, 100);
   }
-  if(id==='screen-field') { refreshData(); autoFdId(); }
+  if(id==='screen-field') {
+    // Ẩn tất cả screen khác trước
+    document.querySelectorAll('.screen').forEach(s=>{
+      if(s.id!=='screen-field') s.style.display='none';
+    });
+    const sf = document.getElementById('screen-field');
+    if(sf) {
+      sf.style.display = 'flex';
+      sf.scrollTop = 0;
+    }
+    // Reset về tab Thêm điểm
+    setTimeout(()=>{
+      const firstTab = document.querySelector('.fd-tab[data-tab="fd-new"]');
+      if(firstTab) switchFdTab(firstTab);
+      autoFdId();
+    }, 50);
+    refreshData();
+  }
 }
 
 function gotoPublic() { showScreen('screen-public'); refreshData(); }
@@ -1655,6 +1974,9 @@ function gotoPublic() { showScreen('screen-public'); refreshData(); }
   const el = document.getElementById('current-field-pin');
   if(el) el.textContent = STATE.fieldPin || '1234';
 })();
+
+// Tải PIN admin từ Sheets ngay khi load trang
+document.addEventListener('DOMContentLoaded', ()=>{ fetchAdminPin(); });
 
 function switchRole(role,btn) {
   document.querySelectorAll('.role-tab').forEach(t=>t.classList.remove('active'));
@@ -1671,7 +1993,7 @@ function switchRole(role,btn) {
   document.getElementById('login-err').textContent='';
 }
 
-function doLogin() {
+async function doLogin() {
   const err=document.getElementById('login-err');
   const activeTab = document.querySelector('.role-tab.active');
   const tabText = activeTab ? activeTab.textContent : '';
@@ -1680,14 +2002,37 @@ function doLogin() {
 
   if(isAdmin) {
     const pin=document.getElementById('admin-pin').value.trim();
-    const acc=STATE.accounts.find(a=>a.role==='Admin'&&a.pin===pin);
-    if(!acc){err.textContent='Mã PIN không đúng. Vui lòng thử lại.';return;}
+    const loginBtn = document.querySelector('button.btn-login');
+    if(loginBtn) { loginBtn.disabled=true; loginBtn.innerHTML='<i class="fa-solid fa-spinner fa-spin"></i> Đang xác thực...'; }
+    await fetchAllAccounts();
+    if(loginBtn) { loginBtn.disabled=false; loginBtn.innerHTML='<i class="fa-solid fa-right-to-bracket"></i> Đăng nhập'; }
+
+    // Debug: hiện danh sách tài khoản đang có
+    console.log('STATE.accounts sau fetch:', JSON.stringify(STATE.accounts));
+
+    // Tìm Admin theo role VÀ pin
+    let acc = STATE.accounts.find(a=>a.role==='Admin' && a.pin===pin);
+
+    // Fallback: nếu không tìm theo role, thử tìm theo id=ADMIN
+    if(!acc) acc = STATE.accounts.find(a=>a.id==='ADMIN' && a.pin===pin);
+
+    if(!acc){
+      // Hiện danh sách role để debug
+      const roles = STATE.accounts.map(a=>a.id+'='+a.role+'/'+a.pin).join(', ');
+      console.warn('Login failed. Accounts:', roles, '| PIN nhập:', pin);
+      err.textContent='Mã PIN không đúng. Vui lòng thử lại.';
+      return;
+    }
     STATE.currentUser=acc; STATE.currentRole='admin';
     showScreen('screen-admin'); refreshData();
   } else if(isField) {
     const pin=document.getElementById('field-pin').value.trim();
-    const FIELD_PIN = STATE.fieldPin || '1234';
-    if(pin!==FIELD_PIN){err.textContent='Mã PIN thực địa không đúng.';return;}
+    // Tải tài khoản mới nhất từ Sheets
+    await fetchAllAccounts();
+    const fieldAcc = STATE.accounts.find(a=>a.role==='Field' || a.id==='FIELD');
+    const FIELD_PIN = fieldAcc ? fieldAcc.pin : (STATE.fieldPin || '1234');
+    console.log('Field login: PIN nhập='+pin+', PIN sheet='+FIELD_PIN);
+    if(!pin||pin!==FIELD_PIN){err.textContent='Mã PIN thực địa không đúng.';return;}
     STATE.currentUser={name:'Sinh viên thực địa',role:'Field'};
     STATE.currentRole='field';
     document.getElementById('fd-username').textContent='Sinh viên thực địa';
@@ -1697,6 +2042,8 @@ function doLogin() {
   } else {
     const id=document.getElementById('owner-id').value.trim().toUpperCase();
     const pin=document.getElementById('owner-pin').value.trim();
+    // Tải tài khoản mới nhất từ Sheets
+    await fetchAllAccounts();
     const acc=STATE.accounts.find(a=>a.id===id&&a.pin===pin&&a.role==='User');
     if(!acc){err.textContent='Mã điểm hoặc mã PIN không đúng.';return;}
     STATE.currentUser=acc; STATE.currentRole='owner';
@@ -1846,9 +2193,12 @@ function renderPubMapMarkers(points) {
     m.bindPopup(makePopupHtml(p), {maxWidth:260, closeButton:true});
     // Click → chọn điểm + zoom
     m.on('click', ()=>selectPoint(p.id));
-    // Hover chuột → hiện popup ngay (desktop)
-    m.on('mouseover', function() {
-      if(window.innerWidth > 768) this.openPopup();
+    // Hover chuột → hiện popup (desktop)
+    m.on('mouseover', function(e) {
+      if(window.innerWidth > 768) {
+        L.DomEvent.stopPropagation(e);
+        this.openPopup();
+      }
     });
     pubMarkers[p.id] = m;
   });
@@ -1875,12 +2225,23 @@ function renderAdminMap() {
     adminMarkersMap = {};
     STATE.points.filter(p=>p.status==='Đã duyệt'&&p.lat&&p.lng).forEach(p=>{
       const m = L.marker([p.lat, p.lng], {icon: makeIcon(p.cat, false)}).addTo(adminMap);
-      m.bindPopup(`<div style="font-family:'Be Vietnam Pro',sans-serif">
+      const popupContent = `<div style="font-family:'Be Vietnam Pro',sans-serif;min-width:160px">
         <strong style="font-size:13px">${p.name}</strong>
         <div style="font-size:12px;color:#5a7060;margin-top:4px">${p.id} · ${p.cat}</div>
-        <button onclick="openEditPoint('${p.id}')" style="margin-top:8px;padding:5px 10px;background:#1a5c38;color:#fff;border:none;border-radius:6px;font-size:12px;cursor:pointer;font-family:inherit">
+        <div style="font-size:11px;color:#5a7060;margin-top:2px">${p.addr||''}</div>
+        <button onclick="openEditPoint('${p.id}')" style="margin-top:8px;padding:6px 12px;background:#1a5c38;color:#fff;border:none;border-radius:6px;font-size:12px;cursor:pointer;font-family:inherit;width:100%">
           <i class='fa-solid fa-pen'></i> Chỉnh sửa
-        </button></div>`, {maxWidth:220});
+        </button></div>`;
+      m.bindPopup(popupContent, {maxWidth:240});
+      // Hover chuột → hiện popup (desktop)
+      m.on('mouseover', function(e) {
+        if(window.innerWidth > 768) {
+          L.DomEvent.stopPropagation(e);
+          this.openPopup();
+        }
+      });
+      // Click → mở form sửa
+      m.on('click', function() { openEditPoint(p.id); });
       adminMarkersMap[p.id] = m;
     });
   }, 80);
@@ -1919,31 +2280,120 @@ function renderCatBreakdown() {
   }).join('');
 }
 function renderAdminPoints() {
-  const tb=document.getElementById('points-tbody');
-  if(!STATE.points.length){tb.innerHTML='<tr><td colspan="7" style="text-align:center;padding:24px;color:var(--text3)">Chưa có dữ liệu</td></tr>';return;}
-  tb.innerHTML=STATE.points.slice(0,50).map((p,i)=>{
-    const c=CAT_COLORS[p.cat]||CAT_COLORS['Du lịch'];
-    const hasPending=p.pendingSdt||p.pendingGia;
-    return `<tr>
-      <td><code style="font-size:12px">${p.id}</code></td>
-      <td><strong>${p.name}</strong></td>
-      <td><span class="tag" style="background:${c.light};color:${c.text}">${p.cat}</span></td>
-      <td>${p.addr}</td><td>${p.phone||'—'}</td>
-      <td>${hasPending?'<span class="tag tag-pending">Chờ duyệt</span>':'<span class="tag tag-approved">Đã duyệt</span>'}</td>
-      <td style="white-space:nowrap">
-        <button class="btn btn-ghost btn-sm" onclick="openEditPoint('${p.id}')"><i class="fa-solid fa-pen"></i></button>
-        <button class="btn btn-danger btn-sm" onclick="deletePoint('${p.id}')"><i class="fa-solid fa-trash"></i></button>
-      </td></tr>`;
-  }).join('');
+  const pts = STATE.points.slice(0,100);
+  const tb = document.getElementById('points-tbody');
+  const cl = document.getElementById('points-cardlist');
+
+  if(!pts.length) {
+    if(tb) tb.innerHTML='<tr><td colspan="7" style="text-align:center;padding:24px;color:var(--text3)">Chưa có dữ liệu</td></tr>';
+    if(cl) cl.innerHTML='<div style="text-align:center;padding:30px;color:var(--text3)"><i class="fa-solid fa-inbox" style="font-size:28px;display:block;margin-bottom:10px"></i>Chưa có dữ liệu</div>';
+    return;
+  }
+
+  // ── Bảng desktop ──
+  if(tb) {
+    tb.innerHTML = pts.map(p => {
+      const c = CAT_COLORS[p.cat]||CAT_COLORS['Du lịch'];
+      const hasPending = p.pendingSdt||p.pendingGia;
+      return `<tr>
+        <td><code style="font-size:12px">${p.id}</code></td>
+        <td><strong>${p.name}</strong></td>
+        <td><span class="tag" style="background:${c.light};color:${c.text}">${p.cat}</span></td>
+        <td>${p.addr}</td><td>${p.phone||'—'}</td>
+        <td>${p.status==='Chờ duyệt'?'<span class="tag tag-pending">Chờ duyệt</span>':'<span class="tag tag-approved">Đã duyệt</span>'}</td>
+        <td>
+          ${p.status!=='Đã duyệt'
+            ? `<button class="btn btn-sm" style="background:#1a5c38;color:#fff;border:none;white-space:nowrap" onclick="approvePoint('${p.id}')"><i class="fa-solid fa-check"></i> Duyệt</button>`
+            : `<button class="btn btn-ghost btn-sm" style="white-space:nowrap" onclick="rejectPoint('${p.id}')"><i class="fa-solid fa-clock"></i> Chờ duyệt</button>`
+          }
+        </td>
+        <td style="white-space:nowrap">
+          <button class="btn btn-ghost btn-sm" onclick="openEditPoint('${p.id}')"><i class="fa-solid fa-pen"></i></button>
+          <button class="btn btn-danger btn-sm" onclick="deletePoint('${p.id}')"><i class="fa-solid fa-trash"></i></button>
+        </td></tr>`;
+    }).join('');
+  }
+
+  // ── Card list mobile ──
+  if(cl) {
+    cl.innerHTML = pts.map(p => {
+      const c = CAT_COLORS[p.cat]||CAT_COLORS['Du lịch'];
+      const hasPending = p.pendingSdt||p.pendingGia;
+      const statusHtml = p.status==='Chờ duyệt'
+        ? '<span class="tag tag-pending">Chờ duyệt</span>'
+        : '<span class="tag tag-approved">Đã duyệt</span>';
+      return `<div class="acard">
+        <div class="acard-header">
+          <div>
+            <div class="acard-id">${p.id}</div>
+            <div class="acard-name">${p.name}</div>
+          </div>
+          <div class="acard-actions">
+            <button class="btn btn-ghost btn-sm" onclick="openEditPoint('${p.id}')"><i class="fa-solid fa-pen"></i></button>
+            <button class="btn btn-danger btn-sm" onclick="deletePoint('${p.id}')"><i class="fa-solid fa-trash"></i></button>
+          </div>
+        </div>
+        ${p.addr?`<div class="acard-row"><i class="fa-solid fa-location-dot"></i><span>${p.addr}</span></div>`:''}
+        ${p.phone?`<div class="acard-row"><i class="fa-solid fa-phone"></i><span>${p.phone}</span></div>`:''}
+        <div class="acard-foot" style="flex-wrap:wrap;gap:6px">
+          <span class="tag" style="background:${c.light};color:${c.text};font-size:11px">${p.cat}</span>
+          ${statusHtml}
+          <div style="display:flex;gap:6px;margin-left:auto">
+            ${p.status!=='Đã duyệt'
+              ? `<button class="btn btn-sm" style="background:#1a5c38;color:#fff;border:none" onclick="approvePoint('${p.id}')"><i class="fa-solid fa-check"></i> Duyệt</button>`
+              : `<button class="btn btn-ghost btn-sm" onclick="rejectPoint('${p.id}')"><i class="fa-solid fa-clock"></i> Chờ</button>`
+            }
+            <button class="btn btn-ghost btn-sm" onclick="openEditPoint('${p.id}')"><i class="fa-solid fa-pen"></i></button>
+            <button class="btn btn-danger btn-sm" onclick="deletePoint('${p.id}')"><i class="fa-solid fa-trash"></i></button>
+          </div>
+        </div>
+      </div>`;
+    }).join('');
+  }
 }
+async function syncAccountsFromSheet() {
+  showToast('Đang tải tài khoản từ sheet...','info');
+  await fetchAllAccounts();
+  renderAdminAccounts();
+  showToast('✅ Đã đồng bộ tài khoản từ sheet TAI_KHOAN','success');
+}
+
 function renderAdminAccounts() {
-  const tb=document.getElementById('accounts-tbody');
-  tb.innerHTML=STATE.accounts.map(a=>`<tr>
-    <td><code>${a.id}</code></td><td>${a.name}</td>
-    <td><span class="pin-cell">${a.pin}</span></td>
-    <td><span class="tag ${a.role==='Admin'?'tag-dtls':'tag-approved'}">${a.role}</span></td>
-    <td><button class="btn btn-danger btn-sm" onclick="deleteAccount('${a.id}','${a.pin}')"><i class="fa-solid fa-trash"></i></button></td>
-  </tr>`).join('');
+  const tb = document.getElementById('accounts-tbody');
+  const cl = document.getElementById('accounts-cardlist');
+  const roleColor = r => r==='Admin'?'tag-dtls':r==='Field'?'tag-pending':'tag-approved';
+  const roleLabel = r => r==='Admin'?'Cán bộ':r==='Field'?'Thực địa':'Chủ cơ sở';
+
+  // ── Bảng desktop ──
+  if(tb) {
+    tb.innerHTML = STATE.accounts.map(a=>`<tr>
+      <td><code>${a.id}</code></td>
+      <td>${a.name}</td>
+      <td><span class="pin-cell">${a.pin}</span></td>
+      <td><span class="tag ${roleColor(a.role)}">${roleLabel(a.role)}</span></td>
+      <td style="white-space:nowrap">
+        <button class="btn btn-danger btn-sm" onclick="deleteAccount('${a.id}','${a.pin}')"><i class="fa-solid fa-trash"></i></button>
+      </td>
+    </tr>`).join('');
+  }
+
+  // ── Card list mobile ──
+  if(cl) {
+    cl.innerHTML = STATE.accounts.map(a=>`
+      <div class="acard">
+        <div class="acard-header">
+          <div>
+            <div class="acard-id">${a.id}</div>
+            <div class="acard-name">${a.name||'—'}</div>
+          </div>
+          <button class="btn btn-danger btn-sm" onclick="deleteAccount('${a.id}','${a.pin}')"><i class="fa-solid fa-trash"></i></button>
+        </div>
+        <div class="acard-row"><i class="fa-solid fa-key"></i><span>PIN: <strong>${a.pin}</strong></span></div>
+        <div class="acard-foot">
+          <span class="tag ${roleColor(a.role)}">${roleLabel(a.role)}</span>
+        </div>
+      </div>`).join('');
+  }
 }
 function renderReview() {
   const pending=STATE.points.filter(p=>p.pendingSdt||p.pendingGia);
@@ -1966,12 +2416,30 @@ function renderReview() {
     </div>`).join('');
 }
 
+function toggleAdminNav() {
+  const nav = document.querySelector('.admin-nav');
+  const overlay = document.getElementById('admin-overlay');
+  if(!nav) return;
+  const isOpen = nav.classList.contains('open');
+  nav.classList.toggle('open', !isOpen);
+  overlay && overlay.classList.toggle('show', !isOpen);
+}
+
+// Đóng sidebar khi chọn panel trên mobile
 function switchAdminPanel(el) {
   document.querySelectorAll('.admin-nav .nav-item').forEach(n=>n.classList.remove('active'));
   el.classList.add('active');
   document.querySelectorAll('.admin-panel').forEach(p=>p.classList.remove('active'));
-  document.getElementById(el.dataset.panel).classList.add('active');
+  const panel = document.getElementById(el.dataset.panel);
+  if(panel) panel.classList.add('active');
   if(el.dataset.panel==='admin-map') renderAdminMap();
+  // Đóng sidebar trên mobile
+  if(window.innerWidth <= 768) {
+    document.querySelector('.admin-nav')?.classList.remove('open');
+    document.getElementById('admin-overlay')?.classList.remove('show');
+    const ac = document.querySelector('.admin-content');
+    if(ac) ac.scrollTop = 0;
+  }
 }
 
 // ══════════════════════════════════════════
@@ -2134,20 +2602,57 @@ function openAddAccount() {
   document.getElementById('fa-pin').value='PIN'+Math.floor(1000+Math.random()*9000);
   openModal('modal-account');
 }
-function saveAccount() {
+async function saveAccount() {
   const acc={
-    id:document.getElementById('fa-id').value,
+    id:document.getElementById('fa-id').value.trim().toUpperCase(),
     name:document.getElementById('fa-name').value.trim(),
-    pin:document.getElementById('fa-pin').value,
+    pin:document.getElementById('fa-pin').value.trim(),
     role:document.getElementById('fa-role').value,
   };
   if(!acc.name){showToast('Nhập tên đại diện','error');return;}
-  STATE.accounts.push(acc); saveLocal();
-  closeModal('modal-account'); renderAdminAccounts(); showToast('Đã cấp tài khoản cho '+acc.name,'success');
+  if(!acc.id){showToast('Nhập Mã điểm','error');return;}
+  if(!acc.pin){showToast('Nhập Mã PIN','error');return;}
+
+  // Kiểm tra trùng mã
+  if(STATE.accounts.find(a=>a.id===acc.id)){
+    showToast('Mã điểm '+acc.id+' đã có tài khoản. Hãy xóa tài khoản cũ trước.','error');
+    return;
+  }
+
+  STATE.accounts.push(acc);
+  saveLocal();
+
+  // Đồng bộ lên sheet TAI_KHOAN
+  showToast('Đang lưu lên Google Sheets...','info');
+  const res = await postToGSheets({
+    action: 'saveAccount',
+    id: acc.id,
+    name: acc.name,
+    pin: acc.pin,
+    role: acc.role,
+    sheet: 'TAI_KHOAN'
+  });
+
+  closeModal('modal-account');
+  renderAdminAccounts();
+
+  if(res && res.ok) {
+    showToast('✅ Đã cấp tài khoản cho '+acc.name+' và đồng bộ lên Sheets','success');
+  } else {
+    showToast('⚠️ Đã lưu cục bộ nhưng chưa đồng bộ lên Sheets. Kiểm tra Console (F12).','error');
+  }
 }
-function deleteAccount(id,pin) {
+
+async function deleteAccount(id,pin) {
+  if(!confirm('Xóa tài khoản '+id+'?')) return;
   STATE.accounts=STATE.accounts.filter(a=>!(a.id===id&&a.pin===pin));
-  saveLocal(); renderAdminAccounts(); showToast('Đã xóa tài khoản','success');
+  saveLocal();
+
+  // Đồng bộ xóa lên sheet TAI_KHOAN
+  await postToGSheets({action:'deleteAccount', id, sheet:'TAI_KHOAN'});
+
+  renderAdminAccounts();
+  showToast('✅ Đã xóa tài khoản '+id+' và đồng bộ lên Sheets','success');
 }
 
 // ══════════════════════════════════════════
@@ -2692,14 +3197,44 @@ async function bulkFillImagesAdmin() {
   }
 }
 
-function saveFieldPin() {
+async function changeAdminPin() {
+  const newPin = document.getElementById('cfg-admin-pin').value.trim();
+  if(!newPin) { showToast('Vui lòng nhập mã PIN mới','error'); return; }
+  if(newPin.length < 4) { showToast('Mã PIN phải có ít nhất 4 ký tự','error'); return; }
+
+  // Cập nhật trong STATE.accounts
+  const adminAcc = STATE.accounts.find(a => a.role === 'Admin');
+  if(adminAcc) {
+    adminAcc.pin = newPin;
+  } else {
+    STATE.accounts.push({id:'ADMIN', name:'Cán bộ xã phụ trách', pin:newPin, role:'Admin'});
+  }
+
+  // Lưu vào localStorage
+  localStorage.setItem('accounts', JSON.stringify(STATE.accounts));
+
+  // Đồng bộ lên Google Sheets sheet TAI_KHOAN
+  if(STATE.gsScriptUrl) {
+    showToast('Đang lưu PIN lên Google Sheets...','info');
+    await postToGSheets({action:'saveAccount', id:'ADMIN', name:'Cán bộ xã phụ trách', pin:String(newPin), role:'Admin', sheet:'TAI_KHOAN'});
+    showToast('✅ Đã đổi mã PIN Admin và đồng bộ lên Sheets', 'success');
+  } else {
+    showToast('✅ Đã đổi mã PIN Admin thành: ' + newPin, 'success');
+  }
+
+  document.getElementById('cfg-admin-pin').value = '';
+}
+
+async function saveFieldPin() {
   const pin = document.getElementById('setting-field-pin').value.trim();
   if(!pin||pin.length<4) { showToast('PIN phải có ít nhất 4 ký tự','error'); return; }
   STATE.fieldPin = pin;
   localStorage.setItem('fieldPin', pin);
   const el = document.getElementById('current-field-pin');
   if(el) el.textContent = pin;
-  showToast('Đã lưu PIN thực địa: ' + pin,'success');
+  // Lưu lên sheet TAI_KHOAN
+  await postToGSheets({action:'saveAccount', id:'FIELD', name:'Sinh viên thực địa', pin:String(pin), role:'Field', sheet:'TAI_KHOAN'});
+  showToast('✅ Đã lưu PIN thực địa và đồng bộ lên Sheets','success');
 }
 
 
